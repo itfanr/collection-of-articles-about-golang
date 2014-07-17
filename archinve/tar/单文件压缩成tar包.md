@@ -1,9 +1,9 @@
-archinve/tar°üÀı×Ó£º
+ï»¿archinve/taråŒ…ä¾‹å­ï¼š
 
-Ê¾Àı1£º
+ç¤ºä¾‹1ï¼š
 
-µ¥¸öÎÄ¼şµÄÑ¹Ëõ£¨Ñ¹Ëõºó¸ñÊ½Îª`.tar`£©£º
-Àı×ÓÓÃµ½µÄÖ÷Òªº¯Êı£º
+å•ä¸ªæ–‡ä»¶çš„å‹ç¼©ï¼ˆå‹ç¼©åæ ¼å¼ä¸º`.tar`ï¼‰ï¼š
+ä¾‹å­ç”¨åˆ°çš„ä¸»è¦å‡½æ•°ï¼š
 
  - func Create(name string) (file *File, err error)
  - func Stat(name string) (fi FileInfo, err error)
@@ -11,13 +11,13 @@ archinve/tar°üÀı×Ó£º
  - func (tw *Writer) WriteHeader(hdr *Header) error
  - func Copy(dst Writer, src Reader) (written int64, err error)
 
-`.tar`ÎÄ¼şµÄ×é³É£º´æ´¢ÔÚ`.tar`ÎÄ¼şÖĞµÄÃ¿¸öÎÄ¼ş¶¼ÓÉÁ½²¿·Ö×é³É£ºÎÄ¼şĞÅÏ¢£¨`tar.Header`½á¹¹Ìå£¬ÆäÊµ¾ÍÊÇlinuxÏÂÖ´ĞĞ`ll`ÃüÁîµÃµ½µÄÎÄ¼şĞÅÏ¢£©ºÍÎÄ¼şÄÚÈİ¡£ºÍlinuxÎÄ¼şÏµÍ³¹ÜÀíÎÄ¼şÀàËÆ£¬inode±£´æÁËÎÄ¼şÏà¹ØµÄ´´½¨ÈË¡¢È¨ÏŞ¡¢ÎÄ¼ş´óĞ¡µÈĞÅÏ¢£¬ÎÄ¼şµÄÄÚÈİ±£´æÔÚblockÖĞ¡£
+`.tar`æ–‡ä»¶çš„ç»„æˆï¼šå­˜å‚¨åœ¨`.tar`æ–‡ä»¶ä¸­çš„æ¯ä¸ªæ–‡ä»¶éƒ½ç”±ä¸¤éƒ¨åˆ†ç»„æˆï¼šæ–‡ä»¶ä¿¡æ¯ï¼ˆ`tar.Header`ç»“æ„ä½“ï¼Œå…¶å®å°±æ˜¯linuxä¸‹æ‰§è¡Œ`ll`å‘½ä»¤å¾—åˆ°çš„æ–‡ä»¶ä¿¡æ¯ï¼‰å’Œæ–‡ä»¶å†…å®¹ã€‚å’Œlinuxæ–‡ä»¶ç³»ç»Ÿç®¡ç†æ–‡ä»¶ç±»ä¼¼ï¼Œinodeä¿å­˜äº†æ–‡ä»¶ç›¸å…³çš„åˆ›å»ºäººã€æƒé™ã€æ–‡ä»¶å¤§å°ç­‰ä¿¡æ¯ï¼Œæ–‡ä»¶çš„å†…å®¹ä¿å­˜åœ¨blockä¸­ã€‚
 
-ÏÈ´´½¨Ò»¸öos.Writer¶ÔÏó£¬½«¸Ã¶ÔÏó´«¸øtar.NewWriter£¨¹¹Ôìº¯Êı£©£¬ÕâÑù¾Í¿ÉÒÔ½«´ò°üºóµÄÊı¾İĞ´ÈëÎÄ¼şÖĞ¡£
+å…ˆåˆ›å»ºä¸€ä¸ªos.Writerå¯¹è±¡ï¼Œå°†è¯¥å¯¹è±¡ä¼ ç»™tar.NewWriterï¼ˆæ„é€ å‡½æ•°ï¼‰ï¼Œè¿™æ ·å°±å¯ä»¥å°†æ‰“åŒ…åçš„æ•°æ®å†™å…¥æ–‡ä»¶ä¸­ã€‚
 
-Ïò`.tar`ÎÄ¼şÖĞĞ´ÈëÎÄ¼şÒª·ÖÁ½²½£ºµÚÒ»²½Ğ´ÈëÎÄ¼şĞÅÏ¢£¬µÚ¶ş²½Ğ´ÈëÎÄ¼şÊı¾İ¡£¶ÔÓÚÄ¿Â¼À´Ëµ£¬ÓÉÓÚÃ»ÓĞÄÚÈİ¿ÉĞ´£¬ËùÒÔÖ»ĞèÒªĞ´ÈëÄ¿Â¼ĞÅÏ¢¼´¿É¡£`tar.FileInfoHeader`º¯Êı¿ÉÒÔÖ±½ÓÍ¨¹ı `os.FileInfo`´´½¨`tar.Header`£¬²¢×Ô¶¯ÌîĞ´ `tar.Header` ÖĞµÄ´ó²¿·ÖĞÅÏ¢¡£
+å‘`.tar`æ–‡ä»¶ä¸­å†™å…¥æ–‡ä»¶è¦åˆ†ä¸¤æ­¥ï¼šç¬¬ä¸€æ­¥å†™å…¥æ–‡ä»¶ä¿¡æ¯ï¼Œç¬¬äºŒæ­¥å†™å…¥æ–‡ä»¶æ•°æ®ã€‚å¯¹äºç›®å½•æ¥è¯´ï¼Œç”±äºæ²¡æœ‰å†…å®¹å¯å†™ï¼Œæ‰€ä»¥åªéœ€è¦å†™å…¥ç›®å½•ä¿¡æ¯å³å¯ã€‚`tar.FileInfoHeader`å‡½æ•°å¯ä»¥ç›´æ¥é€šè¿‡ `os.FileInfo`åˆ›å»º`tar.Header`ï¼Œå¹¶è‡ªåŠ¨å¡«å†™ `tar.Header` ä¸­çš„å¤§éƒ¨åˆ†ä¿¡æ¯ã€‚
 
-×¢Òâ£ºÒ»¶¨ÒªÖ´ĞĞ tw.Close() ²Ù×÷£¬ÒòÎª tar.Writer Ê¹ÓÃÁË»º´æ£¬tw.Close() »á½«»º´æÖĞµÄÊı¾İĞ´Èëµ½ÎÄ¼şÖĞ£¬Í¬Ê± tw.Close() »¹»áÏò .tar ÎÄ¼şµÄ×îºóĞ´Èë½áÊøĞÅÏ¢£¬Èç¹û²»¹Ø±Õ tw ¶øÖ±½ÓÍË³ö³ÌĞò£¬ÄÇÃ´½«µ¼ÖÂ .tar ÎÄ¼ş²»ÍêÕû¡£ÏÈ¹Ø±Õtar.Writer£¬ÔÙ¹Ø±Õos.Wtirer£¬Èç¹ûÊ¹ÓÃdefer£¬×¢ÒâLIFO¡£
+æ³¨æ„ï¼šä¸€å®šè¦æ‰§è¡Œ tw.Close() æ“ä½œï¼Œå› ä¸º tar.Writer ä½¿ç”¨äº†ç¼“å­˜ï¼Œtw.Close() ä¼šå°†ç¼“å­˜ä¸­çš„æ•°æ®å†™å…¥åˆ°æ–‡ä»¶ä¸­ï¼ŒåŒæ—¶ tw.Close() è¿˜ä¼šå‘ .tar æ–‡ä»¶çš„æœ€åå†™å…¥ç»“æŸä¿¡æ¯ï¼Œå¦‚æœä¸å…³é—­ tw è€Œç›´æ¥é€€å‡ºç¨‹åºï¼Œé‚£ä¹ˆå°†å¯¼è‡´ .tar æ–‡ä»¶ä¸å®Œæ•´ã€‚å…ˆå…³é—­tar.Writerï¼Œå†å…³é—­os.Wtirerï¼Œå¦‚æœä½¿ç”¨deferï¼Œæ³¨æ„LIFOã€‚
 
 ```
 package main
@@ -39,56 +39,56 @@ func main() {
 	}
 }
 
-// src ÊÇÒª´ò°üµÄÎÄ¼ş
-// dstTar ÊÇÒªÉú³ÉµÄ .tar ÎÄ¼şµÄÂ·¾¶
-// overwrite±ê¼ÇÈç¹û dstTar ÎÄ¼ş´æÔÚ£¬ÊÇ·ñ¸²¸Ç¡£Èç¹û´æÔÚµ«²»¸²¸Ç£¬Ôò·ÅÆú´ò°ü¡£
+// src æ˜¯è¦æ‰“åŒ…çš„æ–‡ä»¶
+// dstTar æ˜¯è¦ç”Ÿæˆçš„ .tar æ–‡ä»¶çš„è·¯å¾„
+// overwriteæ ‡è®°å¦‚æœ dstTar æ–‡ä»¶å­˜åœ¨ï¼Œæ˜¯å¦è¦†ç›–ã€‚å¦‚æœå­˜åœ¨ä½†ä¸è¦†ç›–ï¼Œåˆ™æ”¾å¼ƒæ‰“åŒ…ã€‚
 func Tar(src string, dstTar string, overwrite bool) (err error) {
-	// ÇåÀíÂ·¾¶×Ö·û´®
+	// æ¸…ç†è·¯å¾„å­—ç¬¦ä¸²
 	src = path.Clean(src)
-	// ÅĞ¶ÏÒª´ò°üµÄÎÄ¼ş»òÄ¿Â¼ÊÇ·ñ´æÔÚ
+	// åˆ¤æ–­è¦æ‰“åŒ…çš„æ–‡ä»¶æˆ–ç›®å½•æ˜¯å¦å­˜åœ¨
 	if !Exists(src) {
-		return errors.New("Òª´ò°üµÄÎÄ¼ş²»´æÔÚ£º" + src)
+		return errors.New("è¦æ‰“åŒ…çš„æ–‡ä»¶ä¸å­˜åœ¨ï¼š" + src)
 	}
-	// ÅĞ¶ÏÄ¿±êÎÄ¼şÊÇ·ñ´æÔÚ
+	// åˆ¤æ–­ç›®æ ‡æ–‡ä»¶æ˜¯å¦å­˜åœ¨
 	if FileExists(dstTar) {
-		if overwrite { // ²»¸²¸ÇÒÑ´æÔÚµÄÎÄ¼ş
-			return errors.New("Ä¿±êÎÄ¼şÒÑ¾­´æÔÚ£º" + dstTar)
-		} else { // ¸²¸ÇÒÑ´æÔÚµÄÎÄ¼ş
+		if overwrite { // ä¸è¦†ç›–å·²å­˜åœ¨çš„æ–‡ä»¶
+			return errors.New("ç›®æ ‡æ–‡ä»¶å·²ç»å­˜åœ¨ï¼š" + dstTar)
+		} else { // è¦†ç›–å·²å­˜åœ¨çš„æ–‡ä»¶
 			if er := os.Remove(dstTar); er != nil {
 				return er
 			}
 		}
 	}
-	// ´´½¨¿ÕµÄÄ¿±êÎÄ¼ş,Ò²¿ÉÒÔÓÃos.OpenFileº¯Êı
-	//º¯ÊıÔ­ĞÍ£º
+	// åˆ›å»ºç©ºçš„ç›®æ ‡æ–‡ä»¶,ä¹Ÿå¯ä»¥ç”¨os.OpenFileå‡½æ•°
+	//å‡½æ•°åŸå‹ï¼š
 	//func OpenFile(name string, flag int, perm FileMode) (file *File, err error)
 	fw, er := os.Create(dstTar)
 	if er != nil {
 		return er
 	}
 	defer fw.Close()
-	// ´´½¨ tar.Writer£¬Ö´ĞĞ´ò°ü²Ù×÷
+	// åˆ›å»º tar.Writerï¼Œæ‰§è¡Œæ‰“åŒ…æ“ä½œ
 	tw := tar.NewWriter(fw)
 	defer func() {
-		// ÕâÀïÒªÅĞ¶Ï tw ÊÇ·ñ¹Ø±Õ³É¹¦£¬Èç¹û¹Ø±ÕÊ§°Ü£¬Ôò .tar ÎÄ¼ş¿ÉÄÜ²»ÍêÕû
+		// è¿™é‡Œè¦åˆ¤æ–­ tw æ˜¯å¦å…³é—­æˆåŠŸï¼Œå¦‚æœå…³é—­å¤±è´¥ï¼Œåˆ™ .tar æ–‡ä»¶å¯èƒ½ä¸å®Œæ•´
 		if er := tw.Close(); er != nil {
 			err = er
 		}
 	}()
-	// »ñÈ¡ÎÄ¼şĞÅÏ¢
+	// è·å–æ–‡ä»¶ä¿¡æ¯
 	fi, er := os.Stat(src)
 	if er != nil {
 		return er
 	}
-	// ¿ªÊ¼´ò°ü
+	// å¼€å§‹æ‰“åŒ…
 	tarFile(src, tw, fi)
 	return nil
 }
 
 func tarFile(srcFile string, tw *tar.Writer, fi os.FileInfo) (err error) {
-	// »ñÈ¡Òª´ò°üµÄÎÄ¼şËùÔÚÎ»ÖÃºÍÃû³Æ
+	// è·å–è¦æ‰“åŒ…çš„æ–‡ä»¶æ‰€åœ¨ä½ç½®å’Œåç§°
 	_, srcRelative := path.Split(path.Clean(srcFile))
-	// Ğ´ÈëÎÄ¼şĞÅÏ¢
+	// å†™å…¥æ–‡ä»¶ä¿¡æ¯
 	hdr, er := tar.FileInfoHeader(fi, "")
 	if er != nil {
 		return er
@@ -97,45 +97,45 @@ func tarFile(srcFile string, tw *tar.Writer, fi os.FileInfo) (err error) {
 	if er = tw.WriteHeader(hdr); er != nil {
 		return er
 	}
-	// ´ò¿ªÒª´ò°üµÄÎÄ¼ş£¬×¼±¸¶ÁÈ¡
+	// æ‰“å¼€è¦æ‰“åŒ…çš„æ–‡ä»¶ï¼Œå‡†å¤‡è¯»å–
 	fr, er := os.Open(srcFile)
 	if er != nil {
 		return er
 	}
 	defer fr.Close()
-	// ½«ÎÄ¼şÊı¾İĞ´Èë tw ÖĞ
+	// å°†æ–‡ä»¶æ•°æ®å†™å…¥ tw ä¸­
 	copied, er := io.Copy(tw, fr)
 	if er != nil {
 		return er
 	}
 	if copied < fi.Size() {
-		//fmt.Errorfº¯ÊıÒ²¿ÉÒÔÓÃÀ´´´½¨´íÎóĞÅÏ¢
-		//Ô­ĞÍ£ºfunc Errorf(format string, a ...interface{}) error
-		msg := "ÒÑ¾­Ğ´Èë%d ×Ö½Ú , Ó¦Ğ´Èë %d ×Ö½Ú"
+		//fmt.Errorfå‡½æ•°ä¹Ÿå¯ä»¥ç”¨æ¥åˆ›å»ºé”™è¯¯ä¿¡æ¯
+		//åŸå‹ï¼šfunc Errorf(format string, a ...interface{}) error
+		msg := "å·²ç»å†™å…¥%d å­—èŠ‚ , åº”å†™å…¥ %d å­—èŠ‚"
 		return fmt.Errorf(msg, copied, fi.Size())
 	}
 	return nil
 }
 
-// ÅĞ¶Ïµµ°¸ÊÇ·ñ´æÔÚ
+// åˆ¤æ–­æ¡£æ¡ˆæ˜¯å¦å­˜åœ¨
 func Exists(name string) bool {
 	_, err := os.Stat(name)
 	return err == nil || os.IsExist(err)
 }
 
-// ÅĞ¶ÏÎÄ¼şÊÇ·ñ´æÔÚ
+// åˆ¤æ–­æ–‡ä»¶æ˜¯å¦å­˜åœ¨
 func FileExists(filename string) bool {
 	fi, err := os.Stat(filename)
 	return (err == nil || os.IsExist(err)) && !fi.IsDir()
 }
 
-// ÅĞ¶ÏÄ¿Â¼ÊÇ·ñ´æÔÚ
+// åˆ¤æ–­ç›®å½•æ˜¯å¦å­˜åœ¨
 func DirExists(dirname string) bool {
 	fi, err := os.Stat(dirname)
 	return (err == nil || os.IsExist(err)) && fi.IsDir()
 }
 ```
-²Î¿¼£º
-  [1] http://www.cnblogs.com/golove/p/3454630.html "Golang´´½¨ .tar.gz Ñ¹Ëõ°ü"
+å‚è€ƒï¼š
+  [1] http://www.cnblogs.com/golove/p/3454630.html "Golangåˆ›å»º .tar.gz å‹ç¼©åŒ…"
   [2] https://leanpub.com/go-thestdlib "Go, The Standard Library
 Real Code. Real Productivity. Master The Go Standard Library"		
