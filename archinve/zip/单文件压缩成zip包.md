@@ -1,19 +1,19 @@
-# µ¥ÎÄ¼ş´ò°ü³ÉzipÎÄ¼ş
+ï»¿# å•æ–‡ä»¶æ‰“åŒ…æˆzipæ–‡ä»¶
 
-±êÇ©£¨¿Õ¸ñ·Ö¸ô£©£º tar 
+æ ‡ç­¾ï¼ˆç©ºæ ¼åˆ†éš”ï¼‰ï¼š tar 
 
 ---
-Ê¾Àı1£º
+ç¤ºä¾‹1ï¼š
 
-µ¥¸öÎÄ¼şµÄÑ¹Ëõ£¨Ñ¹Ëõºó¸ñÊ½Îª`.zip`£©£º
+å•ä¸ªæ–‡ä»¶çš„å‹ç¼©ï¼ˆå‹ç¼©åæ ¼å¼ä¸º`.zip`ï¼‰ï¼š
 
-Àı×ÓÓÃµ½µÄÖ÷Òªº¯Êı£º
+ä¾‹å­ç”¨åˆ°çš„ä¸»è¦å‡½æ•°ï¼š
 
  -  func NewWriter(w io.Writer) *Writer
  -  func (w *Writer) Create(name string) (io.Writer, error)
  -  func (w *Writer) CreateHeader(fh *FileHeader) (io.Writer, error)
 
-´´½¨zip°üºÍtar°üÀàËÆ£¬²»Í¬µÄÊÇzip°üÓĞÒ»¸ö·½±ãµÄ¹¤¾ßÈÃÄã¿ìËÙµØ°ÑÎÄ¼şĞ´ÈëÑ¹Ëõ°ü¡£ÎÒÃÇ´ÓµÃµ½NewWriterµÃµ½Writer¶ÔÏóºó£¬¿ÉÒÔÖ±½ÓÊ¹ÓÃCreate·½·¨À´ÏòzipÎÄ¼şĞ´ÈëÄÚÈİ£¬²»ĞèÒª×Ô¼ºĞ´ÎÄ¼şÔªÊı¾İ¡£µ±È»£¬ÄãÒ²¿ÉÒÔ×Ô¼ºÓÃCreateHeaderº¯ÊıÈ¥Ğ´FileHeader¡£
+åˆ›å»ºzipåŒ…å’ŒtaråŒ…ç±»ä¼¼ï¼Œä¸åŒçš„æ˜¯zipåŒ…æœ‰ä¸€ä¸ªæ–¹ä¾¿çš„å·¥å…·è®©ä½ å¿«é€Ÿåœ°æŠŠæ–‡ä»¶å†™å…¥å‹ç¼©åŒ…ã€‚æˆ‘ä»¬ä»å¾—åˆ°NewWriterå¾—åˆ°Writerå¯¹è±¡åï¼Œå¯ä»¥ç›´æ¥ä½¿ç”¨Createæ–¹æ³•æ¥å‘zipæ–‡ä»¶å†™å…¥å†…å®¹ï¼Œä¸éœ€è¦è‡ªå·±å†™æ–‡ä»¶å…ƒæ•°æ®ã€‚å½“ç„¶ï¼Œä½ ä¹Ÿå¯ä»¥è‡ªå·±ç”¨CreateHeaderå‡½æ•°å»å†™FileHeaderã€‚
 
 ```
 package main
@@ -28,12 +28,12 @@ import (
 
 func main() {
 	filename := "test_zip.txt"
-	//ÊìÏ¤linuxµÄÍ¬Ñ§¿Ï¶¨ÖªµÀÎ»»ò°É
+	//ç†Ÿæ‚‰linuxçš„åŒå­¦è‚¯å®šçŸ¥é“ä½æˆ–å§
 	flags := os.O_WRONLY | os.O_CREATE | os.O_TRUNC
-	//0644ÊÇunmaskĞÅÏ¢£¬±íÊ¾ÓÃ»§¡¢ÓÃ»§×é¡¢ÆäËû×éµÄÈ¨ÏŞ
+	//0644æ˜¯unmaskä¿¡æ¯ï¼Œè¡¨ç¤ºç”¨æˆ·ã€ç”¨æˆ·ç»„ã€å…¶ä»–ç»„çš„æƒé™
 	file, err := os.OpenFile("test_zip.zip", flags, 0644)
 	if err != nil {
-		log.Fatalf("Îª´´½¨Ñ¹Ëõ°ü£¬´ò¿ªzipÎÄ¼şÊ§°Ü", err)
+		log.Fatalf("ä¸ºåˆ›å»ºå‹ç¼©åŒ…ï¼Œæ‰“å¼€zipæ–‡ä»¶å¤±è´¥", err)
 	}
 	defer file.Close()
 	zw := zip.NewWriter(file)
@@ -47,23 +47,23 @@ func main() {
 func zipFile(filename string, zw *zip.Writer) error {
 	file, err := os.Open(filename)
 	if err != nil {
-		return fmt.Errorf("´ò¿ªÎÄ¼ş%sÊ§°Ü£º%s", filename, err)
+		return fmt.Errorf("æ‰“å¼€æ–‡ä»¶%så¤±è´¥ï¼š%s", filename, err)
 	}
 	defer file.Close()
 	iw, err := zw.Create(filename)
 	if err != nil {
 		return err
 	}
-	//´Ë´¦²»¼ì²éĞ´ÈëÑ¹Ëõ°üµÄÎÄ¼ş×Ö½ÚÊı¡£
-	//FileHeaderÃ»ÓĞÎÄ¼şµÄsizeĞÅÏ¢¡£
+	//æ­¤å¤„ä¸æ£€æŸ¥å†™å…¥å‹ç¼©åŒ…çš„æ–‡ä»¶å­—èŠ‚æ•°ã€‚
+	//FileHeaderæ²¡æœ‰æ–‡ä»¶çš„sizeä¿¡æ¯ã€‚
 	if _, err := io.Copy(iw, file); err != nil {
-		return fmt.Errorf("½«ÎÄ¼ş %s Ğ´Èë zipÑ¹Ëõ°üÊ§°Ü: %s", filename, err)
+		return fmt.Errorf("å°†æ–‡ä»¶ %s å†™å…¥ zipå‹ç¼©åŒ…å¤±è´¥: %s", filename, err)
 	}
 	return nil
 }
 
 ```
-×¢Òâ£ºCreateº¯ÊıÒªÇó²ÎÊıname±ØĞëÊÇÏà¶ÔÂ·¾¶£¨°üº¬ÕıĞ±¸Ü`/`£©£¬Ò²¾ÍÊÇÂ·¾¶×î¿ªÊ¼²»ÄÜÊÇÅÌ·û»òÕß`/`¡£Createº¯ÊıºÍCreateHeaderÒªÇó£¬ÏÂ´Îµ÷ÓÃCreate¡¢CreateHeader»òÕßCloseÇ°±ØĞë½«ÎÄ¼şÄÚÈİĞ´Èëio.Writer¡£
+æ³¨æ„ï¼šCreateå‡½æ•°è¦æ±‚å‚æ•°nameå¿…é¡»æ˜¯ç›¸å¯¹è·¯å¾„ï¼ˆåŒ…å«æ­£æ–œæ `/`ï¼‰ï¼Œä¹Ÿå°±æ˜¯è·¯å¾„æœ€å¼€å§‹ä¸èƒ½æ˜¯ç›˜ç¬¦æˆ–è€…`/`ã€‚Createå‡½æ•°å’ŒCreateHeaderè¦æ±‚ï¼Œä¸‹æ¬¡è°ƒç”¨Createã€CreateHeaderæˆ–è€…Closeå‰å¿…é¡»å°†æ–‡ä»¶å†…å®¹å†™å…¥io.Writerã€‚
 
 
 
