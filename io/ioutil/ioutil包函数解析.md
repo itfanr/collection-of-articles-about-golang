@@ -4,11 +4,13 @@
 
 ioutil包含有一些公用的I/O工具函数。 
 
-变量 
+##变量 
 
 var Discard io.Writer = devNull(0) 
 
 Discard是一个io.Writer，对其进行的所有Write呼叫都会成功但不会做任何实际的操作。 
+
+##函数
 
 func NopCloser(r io.Reader) io.ReadCloser 
 
