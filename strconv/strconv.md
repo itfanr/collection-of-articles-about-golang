@@ -6,9 +6,11 @@ import "strconv"
 
 ##简介 
 
+>对于`javascript`等动态语言，parseInt等函数都是必备的。可见strconv包的存在多么重要。
 
 ##概览
-strconv包实现了string和其他基本数据类型的转换。对于`javascript`等动态语言，parseInt、toString等函数都是必备的。可见strconv包的存在多么重要。
+strconv包实现了string和其他基本数据类型的转换。
+
 
 ##内容
 
@@ -53,13 +55,13 @@ func AppendInt(dst []byte, i int64, base int) []byte
 ```go
 func AppendQuote(dst []byte, s string) []byte
 ```
-TODO
+将字符串 `s`转换为“双引号”引起来的字符串， 并将结果追加到 dst 的尾部，返回追加后的 []byte, 其中的特殊字符将被转换为“转义字符”。
 
 ###func AppendQuoteRune
 ```go
 func AppendQuoteRune(dst []byte, r rune) []byte
 ```
-将 Unicode 字符转换为“单引号”引起来的字符串， 并将结果追加到 dst 的尾部，返回追加后的 []byte “特殊字符”将被转换为“转义字符”。
+将 Unicode 字符`r`转换为“单引号”引起来的字符串， 并将结果追加到 dst 的尾部，返回追加后的 []byte。“特殊字符”将被转换为“转义字符”。
 
 ###func AppendQuoteRuneToASCII
 ```go
@@ -218,13 +220,17 @@ s：转义后的字符串
 type NumError
 
 type NumError struct {
-    Func string // the failing function (ParseBool, ParseInt, ParseUint, ParseFloat)
-    Num  string // the input
-    Err  error  // the reason the conversion failed (ErrRange, ErrSyntax)
+    Func string // 转换失败的函数 (ParseBool, ParseInt, ParseUint, ParseFloat)
+    Num  string // 输入的字符串
+    Err  error  // 错误转换的原因 (ErrRange, ErrSyntax)
 }
 ```
+如果类型转换失败的转换，可以用一个NumError结构类型的变量来记录。
 
 ###func (*NumError) Error
 ```go
 func (e *NumError) Error() string
 ```
+将错误打印出来。
+
+>格式为：`"strconv." + e.Func + ": " + "parsing " + Quote(e.Num) + ": " + e.Err.Error()`
