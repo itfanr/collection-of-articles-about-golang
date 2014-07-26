@@ -70,7 +70,7 @@ var Usage = func() {
 ```
 Usage指向标准错误输出，打印出用法错误信息。这个函数是一个变量，可以指向一个自定义的函数。
 
-#func Arg
+###func Arg
 ```go
 func Arg(i int) string
 ```
