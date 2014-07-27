@@ -262,6 +262,7 @@ type Flag struct {
 ```
 flag类型代表了一个flag的状态。
 >比如：autogo -f abc.txt，代码flag.String(“f”, “a.txt”, “this is usage”)，则该Flag实例（可以通过flag.Lookup(“f”)获得）相应的值为：f, this is usage , abc.txt, a.txt。
+
 ###func Lookup
 ```go
 func Lookup(name string) *Flag
