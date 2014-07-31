@@ -136,13 +136,13 @@ func Pipe() (*PipeReader, *PipeWriter)
 ```go
 func (r *PipeReader) Close() error
 ```
-关闭reader，随后向单工写入的管道写入数据将会导致ErrClosedPipe错误。
+关闭reader，随后向只写的单工管道写入数据将会导致ErrClosedPipe错误。
 
 ###func (*PipeReader) CloseWithError
 ```go
 func (r *PipeReader) CloseWithError(err error) error
 ```
-关闭reader，随后向单工写入的管道写入数据将会返回err错误。
+关闭reader，随后向只写的单工管道写入数据将会返回err错误。
 
 ###func (*PipeReader) Read
 ```go
@@ -156,21 +156,23 @@ type PipeWriter struct {
     // contains filtered or unexported fields
 }
 ```
-
+PipeWriter是一个只写的单工管道。
 ###func (*PipeWriter) Close
 ```go
 func (w *PipeWriter) Close() error
 ```
-
+关闭Writer，随后另一端从只读的单工管道读将不会返回数据，并返回EOF。
 ###func (*PipeWriter) CloseWithError
 ```go
 func (w *PipeWriter) CloseWithError(err error) error
 ```
+关闭Writer，随后另一端从只读的单工管道读将不会返回数据，并返回`err`错误。
 
 ###func (*PipeWriter) Write
 ```go
 func (w *PipeWriter) Write(data []byte) (n int, err error)
 ```
+实现了标准Write接口，它向管道写入数据，直到readers已经取完所有数据或者读取的另一端关闭才会阻塞。如果读取端被关闭并有错误，`err`将会返回，否则`err`为ErrClosedPipe。
 
 ###type ReadCloser interface
 ```go
@@ -179,6 +181,7 @@ type ReadCloser interface {
     Closer
 }
 ```
+ReadCloser是将基本的Read和Close方法组合的接口。
 
 ###type ReadSeeker interface
 ```go
@@ -187,6 +190,7 @@ type ReadSeeker interface {
     Seeker
 }
 ```
+ReadSeeker 是将基本的Read和Seek方法组合的接口。
 
 ###type ReadWriteCloser interface
 ```go
@@ -196,6 +200,7 @@ type ReadWriteCloser interface {
     Closer
 }
 ```
+ReadWriteCloser是将基本的Read、Write和Close方法组合的接口。
 
 ###type ReadWriteSeeker interface
 ```go
@@ -205,6 +210,7 @@ type ReadWriteSeeker interface {
     Seeker
 }
 ```
+ReadWriteSeeker是将基本的Read、Write和Seek方法组合的接口。
 
 ###type ReadWriter interface
 ```go
@@ -213,6 +219,7 @@ type ReadWriter interface {
     Writer
 }
 ```
+ReadWriter是将基本的Read和Write方法组合的接口。
 
 ###type Reader interface
 ```go
@@ -220,21 +227,33 @@ type Reader interface {
     Read(p []byte) (n int, err error)
 }
 ```
+Reader是封装了基本Read方法的接口。
+
+Read将len(p)字节的数据读入p。它返回读取的字节数(0<=n<=len(p))和遇到的错误。即使Read返回的n<len(p)，在调用时它也会使用所有的p作为擦写空间。如果数据是可用的，但不是len(p)字节，Read按照惯例返回可用的数据，而不是等待得到更多的数据。
+
+如果Read在成功读取n>0字节的数据后遇到了错误或者文件的结尾，它返回读到的字节数。在相同的调用它可能返回非空错误或者在接下来的调用返回错误（并且n==0）。这种情形的一个通用的实例是一个在输入流的末尾返回非零的字节数Reader可能返回err==EOF或者err==nil。下一次的Read应该返回0和EOF，不管怎样。
+
+调用函数应该先处理返回的n>0的字节数据，再考虑err错误。这样做可以正确地处理在读取一些字节后的I/O错误和所有允许的EOF情形。
+
+实现Read方法时不应该返回零字节和nil错误，调用函数应该将这种情形作为no-op（未操作）。
 
 ###func LimitReader
 ```go
 func LimitReader(r Reader, n int64) Reader
 ```
+返回一个Reader，它从`r`读取但是在读到EOF或者读取`n`字节数据后停止。底层的实现是一个*LimitReader。
 
 ###func MultiReader
 ```go
 func MultiReader(readers ...Reader) Reader
 ```
+返回一个Reader，将输入的`readers`逻辑上串联在一起。它们依次读取。一旦所有的输入都返回了EOF，Read会返回EOF。如果其中任意一个reader返回一个非空的、非EOF的错误，Read将会返回那个错误。
 
 ###func TeeReader
 ```go
 func TeeReader(r Reader, w Writer) Reader
 ```
+返回一个Reader，它将从r读到的数据写入w。所有和这个Reader的相关的r的reads方法都有w的writes对应。没有内部的缓冲，因此write必须在read完成之前完成。任何的在写入时遇到的错误都会视为read 错误。
 
 ###type ReaderAt interface
 ```go
