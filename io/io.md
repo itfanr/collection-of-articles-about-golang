@@ -117,7 +117,7 @@ type LimitedReader struct {
     N int64  // max bytes remaining
 }
 ```
-LimitedReader 从R读取数据担心限制了返回的数据为N字节。每次调用读取都会更新N来反映新的剩余的数量。
+LimitedReader 从`R`读取数据担心限制了返回的数据为`N`字节。每次调用读取都会更新`N`来反映新的剩余的数量。
 
 ###func (*LimitedReader) Read
 ```go
@@ -235,7 +235,7 @@ type Reader interface {
 ```
 Reader是封装了基本Read方法的接口。
 
-Read将len(p)字节的数据读入p。它返回读取的字节数(0<=n<=len(p))和遇到的错误。即使Read返回的n<len(p)，在调用时它也会使用所有的p作为擦写空间。如果数据是可用的，但不是len(p)字节，Read按照惯例返回可用的数据，而不是等待得到更多的数据。
+Read将len(p)字节的数据读入`p`。它返回读取的字节数(0<=n<=len(p))和遇到的错误。即使Read返回的n<len(p)，在调用时它也会使用所有的`p`作为写入空间。如果数据是可用的，但不是len(p)字节，Read按照惯例返回可用的数据，而不是等待得到更多的数据。
 
 如果Read在成功读取n>0字节的数据后遇到了错误或者文件的结尾，它返回读到的字节数。在相同的调用它可能返回非空错误或者在接下来的调用返回错误（并且n==0）。这种情形的一个通用的实例是一个在输入流的末尾返回非零的字节数Reader可能返回err==EOF或者err==nil。下一次的Read应该返回0和EOF，不管怎样。
 
@@ -259,7 +259,7 @@ func MultiReader(readers ...Reader) Reader
 ```go
 func TeeReader(r Reader, w Writer) Reader
 ```
-返回一个Reader，它将从r读到的数据写入w。所有和这个Reader的相关的r的reads方法都有w的writes对应。没有内部的缓冲，因此write必须在read完成之前完成。任何的在写入时遇到的错误都会视为read 错误。
+返回一个Reader，它将从`r`读到的数据写入`w`。所有和这个Reader的相关的`r`的reads方法都有`w`的writes对应。没有内部的缓冲，因此write必须在read完成之前完成。任何的在写入时遇到的错误都会视为read 错误。
 
 ###type ReaderAt interface
 ```go
@@ -269,9 +269,9 @@ type ReaderAt interface {
 ```
 ReaderAt接口封装了基本的ReadAt方法。
 
-ReadAt从偏移量为off将len(p)字节的底层数据输入读入p。它返回读到的字节数（0<=n<=len(p)）并返回遇到的错误。
+ReadAt从偏移量为`off`将len(p)字节的底层数据输入读入`p`。它返回读到的字节数（0<=n<=len(p)）并返回遇到的错误。
 
-当ReadAt返回n<len(p)，它返回一个非空错误解释没有更多字节返回的原因。在这个方面，ReadAt比Read更苛刻。
+当ReadAt返回n<len(p)，它返回一个非空错误解释没有返回更多字节的原因。在这个方面，ReadAt比Read更苛刻。
 
 尽管ReadAt返回n<len(p)，在调用期间它可能使用所有的p作为读写空间。如果一些数据是可以获得的但是不是len(p)字节，ReadAt阻塞直到所有数据都可以获得或者返回一个错误。在这个方面，ReadAt和Read不同。
 
@@ -328,7 +328,7 @@ SectionReader 实现了Read、Seek和ReadAt，是底层ReaderAt接口上的一�
 ```go
 func NewSectionReader(r ReaderAt, off int64, n int64) *SectionReader
 ```
-NewSectionReader返回一个SectionReader，它从r读取，偏移量为off，并在读取n字节数据后的EOF停止。
+NewSectionReader返回一个SectionReader，它从`r`读取，偏移量为`off`，并在读取`n`字节数据后的EOF处停止。
 
 ###func (*SectionReader) Read
 ```go
@@ -402,7 +402,7 @@ type WriterAt interface {
 ```
 WriterAt封装了基本的WriteAt方法。
 
-WriteAt将len(p)字节的偏移量为`off`数据从p写入底层数据流。它返回的字节数（0<=n<=len(p)）并且返回导致write过早停止的错误。如果返回n<len(p)，WriteAt必须返回非空错误。
+WriteAt将len(p)字节的偏移量为`off`数据从`p`写入底层数据流。它返回的字节数（0<=n<=len(p)）并且返回导致write过早停止的错误。如果返回n<len(p)，WriteAt必须返回非空错误。
 
 如果WriteAt带有一个seek偏移量向目标写入数据，WriteAt不应该影响或者被底层seek偏移量影响。
 
@@ -415,6 +415,6 @@ type WriterTo interface {
 }
 ```
 WriteTo是一个接口，它们封装了WriteTo方法。
-WriteTo向w写入直到没有数据写入或者遇到错误。返回的值n是写入的字节数。在写入期间遇到的任何错误都会返回。
+WriteTo向`w`写入直到没有数据写入或者遇到错误。返回的值n是写入的字节数。在写入期间遇到的任何错误都会返回。
 
 如果有可用的WriterTo方法，Copy函数会使用它。
