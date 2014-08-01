@@ -10,7 +10,7 @@ import "io"
 ##概览
 io包提供了底层I/O操作的接口。它主要的工作是封装现有的底层实现的方法，比如os包中的方法，然后提供抽象出来的方法作为接口。
 
-因为这些接口和操作用各种实现封装了底层，除非另有通知，客户端不应该假设他们在并行操作时是安全的。
+因为这些接口和操作用各种实现封装了底层，除非另有通知，多个实例不应该假设他们在并行操作时是安全的。
 
 ##变量
 ```go
@@ -25,7 +25,7 @@ ErrClosedPipe是用来指明操作一个已经关闭的管道时产生的错误�
 ```go
 var ErrNoProgress = errors.New("multiple Read calls return no data or error")
 ```
-当多次调用Read，没有数据返回或者读取错误，多个io.Reader的客户端会返回ErrNoProgress。ErrNoProgress经常作为一个损坏的io.Reader的标记。
+当多次调用Read，没有数据返回或者读取错误，多个io.Reader的实例会返回ErrNoProgress。ErrNoProgress经常作为一个损坏的io.Reader的标记。
 ```go
 var ErrShortBuffer = errors.New("short buffer")
 ```
@@ -267,6 +267,19 @@ type ReaderAt interface {
     ReadAt(p []byte, off int64) (n int, err error)
 }
 ```
+ReaderAt接口封装了基本的ReadAt方法。
+
+ReadAt从偏移量为off将len(p)字节的底层数据输入读入p。它返回读到的字节数（0<=n<=len(p)）并返回遇到的错误。
+
+当ReadAt返回n<len(p)，它返回一个非空错误解释没有更多字节返回的原因。在这个方面，ReadAt比Read更苛刻。
+
+尽管ReadAt返回n<len(p)，在调用期间它可能使用所有的p作为读写空间。如果一些数据是可以获得的但是不是len(p)字节，ReadAt阻塞直到所有数据都可以获得或者返回一个错误。在这个方面，ReadAt和Read不同。
+
+如果ReadAt返回的n=len(p)在输入数据的结尾，ReadAt可能返回err==EOF或者err==nil。
+
+如果ReadAt带有一个seek偏移量从源数据读入，ReadAt不应该影响或者被底层seek偏移量影响。
+
+多个ReadAt的实例可以并行读取同一个源文件。
 
 ###type ReaderFrom interface
 ```go
@@ -274,6 +287,11 @@ type ReaderFrom interface {
     ReadFrom(r Reader) (n int64, err error)
 }
 ```
+ReaderFrom是一个封装了ReadFrom方法的接口。
+
+ReadFrom从`r`读取数据直到EOF或者遇到错误。返回值`n`是读到的字节数。在读取时任何除了io.EOF之外的错误都会返回。
+
+如果有可用的ReadFrom函数，Copy函数使用它。
 
 ###type RuneReader interface
 ```go
@@ -281,6 +299,9 @@ type RuneReader interface {
     ReadRune() (r rune, size int, err error)
 }
 ```
+ RuneReader是封装了ReadRune方法的接口。
+ ReadRune读取单个UTF-8编码的字符并返回rune类型和她得字节数。如果没有可用的字符，将会返回错误`err`。
+ 
 
 ###type RuneScanner interface
 ```go
@@ -289,6 +310,9 @@ type RuneScanner interface {
     UnreadRune() error
 }
 ```
+RuneScanner是将UnreadRune方法加入到基本的ReadRune方法组成的接口。
+
+UnreadRune引起下一次的ReadRune调用，并返回上一次ReadRune相同的rune类型。调用两次UnreadRune时，如果中间没有调用ReadRune，那么将会返回错误。
 
 ###type SectionReader struct
 ```go
@@ -296,11 +320,15 @@ type SectionReader struct {
     // contains filtered or unexported fields
 }
 ```
+SectionReader 实现了Read、Seek和ReadAt，是底层ReaderAt接口上的一部分。
+
+>SectionReader 类型SectionReader是一个struct（没有任何导出的字段），实现了 Read, Seek 和 ReadAt，同时，内嵌了 ReaderAt 接口。
 
 ###func NewSectionReader
 ```go
 func NewSectionReader(r ReaderAt, off int64, n int64) *SectionReader
 ```
+NewSectionReader返回一个SectionReader，它从r读取，偏移量为off，并在读取n字节数据后的EOF停止。
 
 ###func (*SectionReader) Read
 ```go
@@ -328,6 +356,9 @@ type Seeker interface {
     Seek(offset int64, whence int) (int64, error)
 }
 ```
+Seeker是一个接口，它封装了基本的Seek方法。
+
+Seek根据`whence`设置了下一次读或写的偏移量`offset`：0意味着相对于文件的开始，1意味着相对于当前偏移量，2意味着相对于结尾。Seek返回新的偏移量或者错误（如果存在的话）。
 
 ###type WriteCloser interface
 ```go
@@ -336,6 +367,7 @@ type WriteCloser interface {
     Closer
 }
 ```
+WriteCloser是一个接口，它将基本的Write和Close方法组合。
 
 ###type WriteSeeker interface
 ```go
@@ -344,6 +376,7 @@ type WriteSeeker interface {
     Seeker
 }
 ```
+WriteSeeker是一个接口，它将基本的Write和Seek方法组合。
 
 ###type Writer interface
 ```go
@@ -351,11 +384,15 @@ type Writer interface {
     Write(p []byte) (n int, err error)
 }
 ```
+Writer封装了基本的Write方法。
+
+Write将len(p)字节的数据从`p`写入底层数据流。它返回从`p`写入的字节数（0<=n<=len(p)），并且如果过早地结束了写数据，同时会返回错误。如果n<len(p)，Write必须返回非空的错误。Write不能改变数据切片`p`，临时改变也不行。
 
 ###func MultiWriter
 ```go
 func MultiWriter(writers ...Writer) Writer
 ```
+MultiWriter创建了一个writer，它将writes复制给了所有给定的writers，类似于Unix tee(1)命令。
 
 ###type WriterAt interface
 ```go
@@ -363,6 +400,13 @@ type WriterAt interface {
     WriteAt(p []byte, off int64) (n int, err error)
 }
 ```
+WriterAt封装了基本的WriteAt方法。
+
+WriteAt将len(p)字节的偏移量为`off`数据从p写入底层数据流。它返回的字节数（0<=n<=len(p)）并且返回导致write过早停止的错误。如果返回n<len(p)，WriteAt必须返回非空错误。
+
+如果WriteAt带有一个seek偏移量向目标写入数据，WriteAt不应该影响或者被底层seek偏移量影响。
+
+多个WriteAt的实例可以在同一个目标上执行并行的WriteAt调用，如果读取范围不重叠。
 
 ###type WriterTo interface
 ```go
@@ -370,3 +414,7 @@ type WriterTo interface {
     WriteTo(w Writer) (n int64, err error)
 }
 ```
+WriteTo是一个接口，它们封装了WriteTo方法。
+WriteTo向w写入直到没有数据写入或者遇到错误。返回的值n是写入的字节数。在写入期间遇到的任何错误都会返回。
+
+如果有可用的WriterTo方法，Copy函数会使用它。
