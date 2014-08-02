@@ -1,4 +1,4 @@
-﻿#htp包
+﻿#http包
 
 import "net/http"
 
@@ -249,6 +249,9 @@ func ParseTime(text string) (t time.Time, err error)
 ```go
 func ProxyFromEnvironment(req *Request) (*url.URL, error)
 ```
+ProxyFromEnvironment返回给定request的代理url. 一般该URL由用户的环境变量 $HTTP_PROXY and $NO_PROXY （or $http_proxy and $no_proxy）指定。如果用户的全局代理环境无效则返回一个错误。 如果全局环境变量没有定义或者，则会返回一个nil的URL和一个nil的错误。
+
+一种特殊的情形，如果req.URL.Host是"localhost"（带有或者不带有端口号），会返回一个nil的URL和一个nil的错误。
 
 ###func ProxyURL
 ```go
@@ -272,12 +275,23 @@ Serve在Listener`l`上接收HTTP连接，为每一个创建一个新的service g
 ```go
 func ServeContent(w ResponseWriter, req *Request, name string, modtime time.Time, content io.ReadSeeker)
 ```
+ServeContent使用提供的ReadSeeker中的content来回答request。ServeContent比io.Copy更好的地方主要是它恰当地处理Range request、设置MIME类型和处理 If-Modified-Since请求。
+
+如果响应的内容类型头没有设置,该函数首先会尝试从文件的文件扩展名推断文件类型。如果推断不出来，则会读取文件的第一个块并传送给DetectContentType来检测类型。 文件名称也可以不使用。 如果文字名称为空，则服务器不会传送给响应。
+
+如果修改时间不为0，ServeContent会把它放在服务器响应的Last-Modified头里面。如果客户端请求中包含了If-Modified-Since头，ServeContent会使用modtime来判断是否把内容传给客户端。
+
+content的Seek方法必须能够工作。 ServeContent通过定位到文件结尾来确定文件大小。 
+
+如果调用函数已经设置w的ETag 头，ServeContent使用它来处理使用 If-Range 和 If-None-Match的请求。
+
+*os.File中实现了io.ReadSeeker接口。
 
 ###func ServeFile
 ```go
 func ServeFile(w ResponseWriter, r *Request, name string)
 ```
-ServeFile向请求回答带有名字的文件或者目录。
+ServeFile向请求输出带有名字的文件或者目录。
 
 ###func SetCookie
 ```go
