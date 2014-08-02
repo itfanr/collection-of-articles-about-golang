@@ -249,7 +249,7 @@ func ParseTime(text string) (t time.Time, err error)
 ```go
 func ProxyFromEnvironment(req *Request) (*url.URL, error)
 ```
-ProxyFromEnvironment返回给定request的代理url. 一般该URL由用户的环境变量 $HTTP_PROXY and $NO_PROXY （or $http_proxy and $no_proxy）指定。如果用户的全局代理环境无效则返回一个错误。 如果全局环境变量没有定义或者，则会返回一个nil的URL和一个nil的错误。
+ProxyFromEnvironment返回给定request的代理url。一般该URL由用户的环境变量 $HTTP_PROXY and $NO_PROXY （or $http_proxy and $no_proxy）指定。如果用户的全局代理环境无效则返回一个错误。 如果全局环境变量没有定义或者，则会返回一个nil的URL和一个nil的错误。
 
 一种特殊的情形，如果req.URL.Host是"localhost"（带有或者不带有端口号），会返回一个nil的URL和一个nil的错误。
 
@@ -346,11 +346,27 @@ type Client struct {
     Timeout time.Duration
 }
 ```
+Client是HTTP client。它的零值（DefaultClient）是一个使用DefaultTransport的有用的client。
+
+Client的Transport 典型地有内部状态（缓存的TCP连接），所以Clients应该被重用而不是因需创建。Clients被多个goroutines使用时是并发安全的。
+
+相对于RoundTripper（比如Transport），Client是高层次的，并且可以额外地处理HTTP的细节，比如cookies和redirects。
 
 ###func (*Client) Do
 ```go
 func (c *Client) Do(req *Request) (resp *Response, err error)
 ```
+Do发送一个HTTP request并返回HTTP响应，在客户端配置的策略（比如redirects、cookies和auth）之后。
+
+如果由于客户端策略（比如CheckRedirect）引起了错误或者出现HTTP 协议错误，这个错误会返回。non-2xx响应不会引起错误。
+
+当err是空的，resp常常包含一个非空的resp体。
+
+当完成读取resp.Body之后，调用者应该关闭它。如果resp.Body没有关闭，Client的底层RoundTripper（典型是Transport）可能不会重用一个持续的向服务器的TCP连接来回答接下来的“keep-alive”请求。
+
+请求体如果非空，会被底层Transport关闭，即使遇到错误。
+
+通常，使用Get、Post或者PostFrom而不是Do。
 
 ###func (*Client) Get
 ```go
@@ -380,6 +396,47 @@ type CloseNotifier interface {
     CloseNotify() <-chan bool
 }
 ```
+CloseNotifier接口通过ResponseWriters接口实现。当底层连接消失之后ResponseWriters允许检测。
+
+这个机制可以用在：如果客户端在response准备好之前已经失去连接，那么取消长时间操作服务器。
+
+###type ConnState
+```go
+type ConnState int
+```
+ConnState 代表客户端向服务器的连接状态。它可以被可选的Server.ConnState hook使用。
+```go
+const (
+    // StateNew represents a new connection that is expected to
+    // send a request immediately. Connections begin at this
+    // state and then transition to either StateActive or
+    // StateClosed.
+    StateNew ConnState = iota
+
+    // StateActive represents a connection that has read 1 or more
+    // bytes of a request. The Server.ConnState hook for
+    // StateActive fires before the request has entered a handler
+    // and doesn't fire again until the request has been
+    // handled. After the request is handled, the state
+    // transitions to StateClosed, StateHijacked, or StateIdle.
+    StateActive
+
+    // StateIdle represents a connection that has finished
+    // handling a request and is in the keep-alive state, waiting
+    // for a new request. Connections transition from StateIdle
+    // to either StateActive or StateClosed.
+    StateIdle
+
+    // StateHijacked represents a hijacked connection.
+    // This is a terminal state. It does not transition to StateClosed.
+    StateHijacked
+
+    // StateClosed represents a closed connection.
+    // This is a terminal state. Hijacked connections do not
+    // transition to StateClosed.
+    StateClosed
+)
+```
 
 ###func (ConnState) String
 ```go
@@ -406,11 +463,13 @@ type Cookie struct {
     Unparsed []string // Raw text of unparsed attribute-value pairs
 }
 ```
+Cookie代表HTTP cookie ，它在HTTP响应的Set-Cookie头或者HTTP请求的Cookie头中发送。
 
 ###func (*Cookie) String
 ```go
 func (c *Cookie) String() string
 ```
+String返回序列化的cookie，它在Cookie头中使用（只要设置了Name和Value）或者在Set-Cookies响应头中使用（如果其他fields都被设置）。
 
 ###type CookieJar interface
 ```go
@@ -426,11 +485,19 @@ type CookieJar interface {
     Cookies(u *url.URL) []*Cookie
 }
 ```
+###type Dir
+```go
+type Dir string
+```
+Dir使用限制在具体的目录树的本地文件系统实现了http.FileSystem。
+
+空Dir会作为`"."`。
 
 ###func (Dir) Open
 ```go
 func (d Dir) Open(name string) (File, error)
 ```
+
 
 ###type File interface
 ```go
@@ -459,6 +526,9 @@ type Flusher interface {
     Flush()
 }
 ```
+Flusher 是一个通过ResponseWriters实现的接口。ResponseWriters允许HTTP handler 向客户端冲洗缓冲数据。
+
+注意虽然ResponseWriters支持Flash，如果客户端通过HTTP代理连接，缓冲的数据可能直到响应完成才会到达客户端。
 
 ###type Handler interface
 ```go
@@ -466,10 +536,19 @@ type Handler interface {
     ServeHTTP(ResponseWriter, *Request)
 }
 ```
+实现了Handler接口的类型可以被注册，用来服务一个特定的路径或者在HTTP 服务器的subtree。
+
+ServeHTTP应该向ResponseWriter 写入回答头和数据，然后返回。返回意味着请求结束，HTTP 服务器可以移向连接上的下一次的请求。
 
 ###func FileServer
 ```go
 func FileServer(root FileSystem) Handler
+```
+FileServer 返回一个handler，它用文件系统根的内容来服务于提供HTTP请求。
+
+为了使用操作系统的文件系统实现，使用http.Dir：
+```go
+http.Handle("/", http.FileServer(http.Dir("/tmp")))
 ```
 
 ###func NotFoundHandler
