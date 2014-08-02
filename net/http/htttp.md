@@ -857,6 +857,18 @@ type Response struct {
 ```go
 func Get(url string) (resp *Response, err error)
 ```
+Get分发指定URL的GET请求。如果响应是以下重定向码，Get跟在重定向后面，最多10个重定向：
+```go
+301 (Moved Permanently)
+302 (Found)
+303 (See Other)
+307 (Temporary Redirect)
+```
+如果有太多的重定向或者有HTTP 协议错误，将会返回一个错误。一个non-2xx响应不会引起错误。
+
+当`err`为空，`resp`常常包含一个non-nil resp.Body。当完成了从resp.Body读数据，调用者应该关闭它。
+
+Get是DefaultClient.Get的封装。
 
 ###func Head
 ```go
@@ -867,11 +879,21 @@ func Head(url string) (resp *Response, err error)
 ```go
 func Post(url string, bodyType string, body io.Reader) (resp *Response, err error)
 ```
+Post分发指定的URL的POST请求。
+
+当完成了从resp.Body读数据，调用者应该关闭它。
+
+Post是DefaultClient.Post的封装。
 
 ###func PostForm
 ```go
 func PostForm(url string, data url.Values) (resp *Response, err error)
 ```
+PostForm分发一个指定URL的POST请求，它带有`data`的keys和URL-encoded 的values作为请求体。
+
+当`err`为空，`resp`常常包含一个non-nil resp.Body。当完成了从resp.Body读数据，调用者应该关闭它。
+
+PostForm是DefaultClient.PostForm的封装。
 
 ###func ReadResponse
 ```go
