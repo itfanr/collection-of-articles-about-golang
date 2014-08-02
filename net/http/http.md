@@ -1,4 +1,4 @@
-#htp包
+﻿#htp包
 
 import "net/http"
 
@@ -78,1235 +78,1015 @@ log.Fatal(s.ListenAndServe())
 
 ##变量
 
-
-###func InterfaceAddrs
 ```go
-func InterfaceAddrs() ([]Addr, error)
+var (
+    ErrHeaderTooLong        = &ProtocolError{"header too long"}
+    ErrShortBody            = &ProtocolError{"entity body too short"}
+    ErrNotSupported         = &ProtocolError{"feature not supported"}
+    ErrUnexpectedTrailer    = &ProtocolError{"trailer header without chunked transfer encoding"}
+    ErrMissingContentLength = &ProtocolError{"missing ContentLength in HEAD response"}
+    ErrNotMultipart         = &ProtocolError{"request Content-Type isn't multipart/form-data"}
+    ErrMissingBoundary      = &ProtocolError{"no multipart boundary param in Content-Type"}
+)
 ```
 
-###func Interfaces
 ```go
-func Interfaces() ([]Interface, error)
+var (
+    ErrWriteAfterFlush = errors.New("Conn.Write called after Flush")
+    ErrBodyNotAllowed  = errors.New("http: request method or response status code does not allow body")
+    ErrHijacked        = errors.New("Conn has been hijacked")
+    ErrContentLength   = errors.New("Conn.Write wrote more than the declared Content-Length")
+)
+```
+以上是由HTTP server 引发的错误。
+
+```go
+var DefaultClient = &Client{}
+```
+DefaultClient是默认的Client，可以发起Get、Head和Post请求。
+
+```go
+var DefaultServeMux = NewServeMux()
+```
+DefaultServeMux是Server所用的默认的ServerMux。
+
+```go
+var ErrBodyReadAfterClose = errors.New("http: invalid Read on closed Body")
+```
+body被关闭之后读取Request和Response，返回ErrBodyReadAfterClose 。HTTP Handler在它的ResponseWriter上调用WriterHeader或者Write 方法之后，如果此时读取body，将会引起这种错误，这是一种很典型的情形。
+
+```go
+var ErrHandlerTimeout = errors.New("http: Handler timeout")
+```
+当ResponseWriter的Write在已经超时的handlers中调用，返回ErrHandlerTimeout。
+
+```go
+var ErrLineTooLong = errors.New("header line too long")
+```
+```go
+var ErrMissingFile = errors.New("http: no such file")
+```
+当提供的文件的field name不知request中或者不是文件field，FromFile会返回ErrMissingFile。
+
+```go
+var ErrNoCookie = errors.New("http: named cookie not present")
+```
+```go
+var ErrNoLocation = errors.New("http: no Location header in response")
 ```
 
-###func JoinHostPort
+###func CanonicalHeaderKey
 ```go
-func JoinHostPort(host, port string) string
+func CanonicalHeaderKey(s string) string
 ```
+返回header key `s`的正规格式。它将首字母和hyphen后面的任意字母转为大写形式，其余的转为小写。比如`"accept-encoding"`的canonical key是` "Accept-Encoding"`。
 
-###func LookupAddr
+###func DetectContentType
 ```go
-func LookupAddr(addr string) (name []string, err error)
+func DetectContentType(data []byte) string
 ```
+实现了http://mimesniff.spec.whatwg.org描述的算法，用来确定给定数据的内容类型。它考虑了最多512字节的数据。DetectContentType常常返回一个有效的MIME类型：如果它无法确定一个具体的类型，它返回` "application/octet-stream"`。
 
-###func LookupCNAME
+###func Error
 ```go
-func LookupCNAME(name string) (cname string, err error)
+func Error(w ResponseWriter, error string, code int)
 ```
+Error向请求回答带有具体错误信息的request和HTTP code。错误信息应该是纯文本格式。
 
-###func LookupHost
+###func Handle
 ```go
-func LookupHost(host string) (addrs []string, err error)
+func Handle(pattern string, handler Handler)
 ```
+Handle在DefaultServeMux注册了给定形式（pattern）的handler。ServeMux 的相关文档解释了形式（patterns ）如何被解析。
 
-###func LookupIP
+###func HandleFunc
 ```go
-func LookupIP(host string) (addrs []IP, err error)
+func HandleFunc(pattern string, handler func(ResponseWriter, *Request))
 ```
+HandleFunc在DefaultServeMux注册了给定形式（pattern）的handler 函数。ServeMux 的相关文档解释了形式（patterns ）如何被解析。
 
-###func LookupMX
+###func ListenAndServe
 ```go
-func LookupMX(name string) (mx []*MX, err error)
+func ListenAndServe(addr string, handler Handler) error
 ```
-
-###func LookupNS
+ListenAndServe在TCP网络地址上监听，然后带着handler来处理来到的链接并调用Serve。Handler典型值为nil，在这种情况下使用DefaultServerMux。
+以下是一个小小的server：
 ```go
-func LookupNS(name string) (ns []*NS, err error)
-```
+package main
 
-###func LookupPort
-```go
-func LookupPort(network, service string) (port int, err error)
-```
+import (
+	"io"
+	"net/http"
+	"log"
+)
 
-###func LookupSRV
-```go
-func LookupSRV(service, proto, name string) (cname string, addrs []*SRV, err error)
-```
+// hello world, the web server
+func HelloServer(w http.ResponseWriter, req *http.Request) {
+	io.WriteString(w, "hello, world!\n")
+}
 
-###func LookupTXT
-```go
-func LookupTXT(name string) (txt []string, err error)
-```
-
-###func SplitHostPort
-```go
-func SplitHostPort(hostport string) (host, port string, err error)
-```
-
-###type Addr interface
-```go
-type Addr interface {
-    Network() string // name of the network
-    String() string  // string form of address
+func main() {
+	http.HandleFunc("/hello", HelloServer)
+	err := http.ListenAndServe(":12345", nil)
+	if err != nil {
+		log.Fatal("ListenAndServe: ", err)
+	}
 }
 ```
 
-###type AddrError struct
+###func ListenAndServeTLS
 ```go
-type AddrError struct {
-    Err  string
-    Addr string
+func ListenAndServeTLS(addr string, certFile string, keyFile string, handler Handler) error
+```
+ListenAndServeTLS的行为与ListenAndServe完全相同，只不过它等待的是HTTPS连接。而且，带有证书和匹配的private key的文件必须提供给server。如果证书被证书颁发机构签署，在server的证书后面是CA的证书，然后应是`certFile`。
+```go
+import (
+	"log"
+	"net/http"
+)
+
+func handler(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Content-Type", "text/plain")
+	w.Write([]byte("This is an example server.\n"))
+}
+
+func main() {
+	http.HandleFunc("/", handler)
+	log.Printf("About to listen on 10443. Go to https://127.0.0.1:10443/")
+	err := http.ListenAndServeTLS(":10443", "cert.pem", "key.pem", nil)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 ```
+可以使用 crypto/tls包中的generate_cert.go来生成cert.pem 和key.pem。
 
-###func (*AddrError) Error
+###func MaxBytesReader
 ```go
-func (e *AddrError) Error() string
+func MaxBytesReader(w ResponseWriter, r io.ReadCloser, n int64) io.ReadCloser
+```
+MaxBytesReader类似于LimitReader ，但是它的目的是限制到来的request bodies。与io.LimitReader相比，MaxBytesReader的结果是一个io.ReadCloser，它对于Read超过了limit返回non-EOF错误，并且当它的Close方法被调用的时候会关闭底层的reader。
+
+###func NotFound
+```go
+func NotFound(w ResponseWriter, r *Request)
+```
+NotFound向请求回答HTTP 404 not found错误。
+
+###func ParseHTTPVersion
+```go
+func ParseHTTPVersion(vers string) (major, minor int, ok bool)
+```
+解析HTTP版的字符串。"HTTP/1.0" 返回 (1, 0, true).
+
+###func ParseTime
+```go
+func ParseTime(text string) (t time.Time, err error)
+```
+解析time header (比如 the Date: header)，它会尝试每一种HTTP/1.1允许的格式: TimeFormat, time.RFC850, and time.ANSIC。
+
+###func ProxyFromEnvironment
+```go
+func ProxyFromEnvironment(req *Request) (*url.URL, error)
 ```
 
-###func (*AddrError) Temporary
+###func ProxyURL
 ```go
-func (e *AddrError) Temporary() bool
+func ProxyURL(fixedURL *url.URL) func(*Request) (*url.URL, error)
+```
+返回一个代理函数（在Transport中使用），它常常返回相同的URL。
+
+###func Redirect
+```go
+func Redirect(w ResponseWriter, r *Request, urlStr string, code int)
+```
+Redirect向请求回答一个url重定向，它可能是一个相对于请求路径的路径。
+
+###func Serve
+```go
+func Serve(l net.Listener, handler Handler) error
+```
+Serve在Listener`l`上接收HTTP连接，为每一个创建一个新的service goroutine。service goroutine读取请求然后调用handler来回答它们。Handler典型值为nil，在这种情况下使用DefaultServerMux。
+
+###func ServeContent
+```go
+func ServeContent(w ResponseWriter, req *Request, name string, modtime time.Time, content io.ReadSeeker)
 ```
 
-###func (*AddrError) Timeout
+###func ServeFile
 ```go
-func (e *AddrError) Timeout() bool
+func ServeFile(w ResponseWriter, r *Request, name string)
 ```
+ServeFile向请求回答带有名字的文件或者目录。
 
-###type Conn interface
+###func SetCookie
 ```go
-type Conn interface {
-    // Read reads data from the connection.
-    // Read can be made to time out and return a Error with Timeout() == true
-    // after a fixed time limit; see SetDeadline and SetReadDeadline.
-    Read(b []byte) (n int, err error)
+func SetCookie(w ResponseWriter, cookie *Cookie)
+```
+SetCookie向给定的 ResponseWriter的headers增加Set-Cookie头。
 
-    // Write writes data to the connection.
-    // Write can be made to time out and return a Error with Timeout() == true
-    // after a fixed time limit; see SetDeadline and SetWriteDeadline.
-    Write(b []byte) (n int, err error)
+###func StatusText
+```go
+func StatusText(code int) string
+```
+StatusText返回对应于HTTP 状态码对应的文字。如果code未知，则返回空字符串。
 
-    // Close closes the connection.
-    // Any blocked Read or Write operations will be unblocked and return errors.
-    Close() error
+###type Client struct
+```go
+type Client struct {
+    // Transport specifies the mechanism by which individual
+    // HTTP requests are made.
+    // If nil, DefaultTransport is used.
+    Transport RoundTripper
 
-    // LocalAddr returns the local network address.
-    LocalAddr() Addr
-
-    // RemoteAddr returns the remote network address.
-    RemoteAddr() Addr
-
-    // SetDeadline sets the read and write deadlines associated
-    // with the connection. It is equivalent to calling both
-    // SetReadDeadline and SetWriteDeadline.
+    // CheckRedirect specifies the policy for handling redirects.
+    // If CheckRedirect is not nil, the client calls it before
+    // following an HTTP redirect. The arguments req and via are
+    // the upcoming request and the requests made already, oldest
+    // first. If CheckRedirect returns an error, the Client's Get
+    // method returns both the previous Response and
+    // CheckRedirect's error (wrapped in a url.Error) instead of
+    // issuing the Request req.
     //
-    // A deadline is an absolute time after which I/O operations
-    // fail with a timeout (see type Error) instead of
-    // blocking. The deadline applies to all future I/O, not just
-    // the immediately following call to Read or Write.
+    // If CheckRedirect is nil, the Client uses its default policy,
+    // which is to stop after 10 consecutive requests.
+    CheckRedirect func(req *Request, via []*Request) error
+
+    // Jar specifies the cookie jar.
+    // If Jar is nil, cookies are not sent in requests and ignored
+    // in responses.
+    Jar CookieJar
+
+    // Timeout specifies a time limit for requests made by this
+    // Client. The timeout includes connection time, any
+    // redirects, and reading the response body. The timer remains
+    // running after Get, Head, Post, or Do return and will
+    // interrupt reading of the Response.Body.
     //
-    // An idle timeout can be implemented by repeatedly extending
-    // the deadline after successful Read or Write calls.
+    // A Timeout of zero means no timeout.
     //
-    // A zero value for t means I/O operations will not time out.
-    SetDeadline(t time.Time) error
-
-    // SetReadDeadline sets the deadline for future Read calls.
-    // A zero value for t means Read will not time out.
-    SetReadDeadline(t time.Time) error
-
-    // SetWriteDeadline sets the deadline for future Write calls.
-    // Even if write times out, it may return n > 0, indicating that
-    // some of the data was successfully written.
-    // A zero value for t means Write will not time out.
-    SetWriteDeadline(t time.Time) error
-}
-```
-
-###func Dial
-```go
-func Dial(network, address string) (Conn, error)
-```
-
-###func DialTimeout
-```go
-func DialTimeout(network, address string, timeout time.Duration) (Conn, error)
-```
-
-###func FileConn
-```go
-func FileConn(f *os.File) (c Conn, err error)
-```
-
-###func Pipe
-```go
-func Pipe() (Conn, Conn)
-```
-
-###type DNSConfigError struct
-```go
-type DNSConfigError struct {
-    Err error
-}
-```
-
-###func (*DNSConfigError) Error
-```go
-func (e *DNSConfigError) Error() string
-```
-
-###func (*DNSConfigError) Temporary
-```go
-func (e *DNSConfigError) Temporary() bool
-```
-
-###func (*DNSConfigError) Timeout
-```go
-func (e *DNSConfigError) Timeout() bool
-```
-
-###type DNSError struct
-```go
-type DNSError struct {
-    Err       string // description of the error
-    Name      string // name looked for
-    Server    string // server used
-    IsTimeout bool
-}
-```
-
-###func (*DNSError) Error
-```go
-func (e *DNSError) Error() string
-```
-
-###func (*DNSError) Temporary
-```go
-func (e *DNSError) Temporary() bool
-```
-
-###func (*DNSError) Timeout
-```go
-func (e *DNSError) Timeout() bool
-```
-
-###type Dialer struct
-```go
-type Dialer struct {
-    // Timeout is the maximum amount of time a dial will wait for
-    // a connect to complete. If Deadline is also set, it may fail
-    // earlier.
-    //
-    // The default is no timeout.
-    //
-    // With or without a timeout, the operating system may impose
-    // its own earlier timeout. For instance, TCP timeouts are
-    // often around 3 minutes.
+    // The Client's Transport must support the CancelRequest
+    // method or Client will return errors when attempting to make
+    // a request with Get, Head, Post, or Do. Client's default
+    // Transport (DefaultTransport) supports CancelRequest.
     Timeout time.Duration
-
-    // Deadline is the absolute point in time after which dials
-    // will fail. If Timeout is set, it may fail earlier.
-    // Zero means no deadline, or dependent on the operating system
-    // as with the Timeout option.
-    Deadline time.Time
-
-    // LocalAddr is the local address to use when dialing an
-    // address. The address must be of a compatible type for the
-    // network being dialed.
-    // If nil, a local address is automatically chosen.
-    LocalAddr Addr
-
-    // DualStack allows a single dial to attempt to establish
-    // multiple IPv4 and IPv6 connections and to return the first
-    // established connection when the network is "tcp" and the
-    // destination is a host name that has multiple address family
-    // DNS records.
-    DualStack bool
-
-    // KeepAlive specifies the keep-alive period for an active
-    // network connection.
-    // If zero, keep-alives are not enabled. Network protocols
-    // that do not support keep-alives ignore this field.
-    KeepAlive time.Duration
 }
 ```
 
-###func (*Dialer) Dial
+###func (*Client) Do
 ```go
-func (d *Dialer) Dial(network, address string) (Conn, error)
+func (c *Client) Do(req *Request) (resp *Response, err error)
 ```
 
-###type Error interface
+###func (*Client) Get
 ```go
-type Error interface {
-    error
-    Timeout() bool   // Is the error a timeout?
-    Temporary() bool // Is the error temporary?
+func (c *Client) Get(url string) (resp *Response, err error)
+```
+
+###func (*Client) Head
+```go
+func (c *Client) Head(url string) (resp *Response, err error)
+```
+
+###func (*Client) Post
+```go
+func (c *Client) Post(url string, bodyType string, body io.Reader) (resp *Response, err error)
+```
+
+###func (*Client) PostForm
+```go
+func (c *Client) PostForm(url string, data url.Values) (resp *Response, err error)
+```
+
+###type CloseNotifier interface
+```go
+type CloseNotifier interface {
+    // CloseNotify returns a channel that receives a single value
+    // when the client connection has gone away.
+    CloseNotify() <-chan bool
 }
 ```
 
-###func (Flags) String
+###func (ConnState) String
 ```go
-func (f Flags) String() string
+func (c ConnState) String() string
 ```
 
-###func ParseMAC
+###type Cookie struct
 ```go
-func ParseMAC(s string) (hw HardwareAddr, err error)
-```
+type Cookie struct {
+    Name       string
+    Value      string
+    Path       string
+    Domain     string
+    Expires    time.Time
+    RawExpires string
 
-###func (HardwareAddr) String
-```go
-func (a HardwareAddr) String() string
-```
-
-###func IPv4
-```go
-func IPv4(a, b, c, d byte) IP
-```
-
-###func ParseCIDR
-```go
-func ParseCIDR(s string) (IP, *IPNet, error)
-```
-
-###func ParseIP
-```go
-func ParseIP(s string) IP
-```
-
-###func (IP) DefaultMask
-```go
-func (ip IP) DefaultMask() IPMask
-```
-
-###func (IP) Equal
-```go
-func (ip IP) Equal(x IP) bool
-```
-
-###func (IP) IsGlobalUnicast
-```go
-func (ip IP) IsGlobalUnicast() bool
-```
-
-###func (IP) IsInterfaceLocalMulticast
-```go
-func (ip IP) IsInterfaceLocalMulticast() bool
-```
-
-###func (IP) IsLinkLocalMulticast
-```go
-func (ip IP) IsLinkLocalMulticast() bool
-```
-
-###func (IP) IsLinkLocalUnicast
-```go
-func (ip IP) IsLinkLocalUnicast() bool
-```
-
-###func (IP) IsLoopback
-```go
-func (ip IP) IsLoopback() bool
-```
-
-###func (IP) IsMulticast
-```go
-func (ip IP) IsMulticast() bool
-```
-
-###func (IP) IsUnspecified
-```go
-func (ip IP) IsUnspecified() bool
-```
-
-###func (IP) MarshalText
-```go
-func (ip IP) MarshalText() ([]byte, error)
-```
-
-###func (IP) Mask
-```go
-func (ip IP) Mask(mask IPMask) IP
-```
-
-###func (IP) String
-```go
-func (ip IP) String() string
-```
-
-###func (IP) To16
-```go
-func (ip IP) To16() IP
-```
-
-###func (IP) To4
-```go
-func (ip IP) To4() IP
-```
-
-###func (*IP) UnmarshalText
-```go
-func (ip *IP) UnmarshalText(text []byte) error
-```
-
-###type IPAddr struct
-```go
-type IPAddr struct {
-    IP   IP
-    Zone string // IPv6 scoped addressing zone
+    // MaxAge=0 means no 'Max-Age' attribute specified.
+    // MaxAge<0 means delete cookie now, equivalently 'Max-Age: 0'
+    // MaxAge>0 means Max-Age attribute present and given in seconds
+    MaxAge   int
+    Secure   bool
+    HttpOnly bool
+    Raw      string
+    Unparsed []string // Raw text of unparsed attribute-value pairs
 }
 ```
 
-###func ResolveIPAddr
+###func (*Cookie) String
 ```go
-func ResolveIPAddr(net, addr string) (*IPAddr, error)
+func (c *Cookie) String() string
 ```
 
-###func (*IPAddr) Network
+###type CookieJar interface
 ```go
-func (a *IPAddr) Network() string
-```
+type CookieJar interface {
+    // SetCookies handles the receipt of the cookies in a reply for the
+    // given URL.  It may or may not choose to save the cookies, depending
+    // on the jar's policy and implementation.
+    SetCookies(u *url.URL, cookies []*Cookie)
 
-###func (*IPAddr) String
-```go
-func (a *IPAddr) String() string
-```
-
-###type IPConn struct
-```go
-type IPConn struct {
-    // contains filtered or unexported fields
+    // Cookies returns the cookies to send in a request for the given URL.
+    // It is up to the implementation to honor the standard cookie use
+    // restrictions such as in RFC 6265.
+    Cookies(u *url.URL) []*Cookie
 }
 ```
 
-###func DialIP
+###func (Dir) Open
 ```go
-func DialIP(netProto string, laddr, raddr *IPAddr) (*IPConn, error)
+func (d Dir) Open(name string) (File, error)
 ```
 
-###func ListenIP
+###type File interface
 ```go
-func ListenIP(netProto string, laddr *IPAddr) (*IPConn, error)
-```
-
-###func (*IPConn) Close
-```go
-func (c *IPConn) Close() error
-```
-
-###func (*IPConn) File
-```go
-func (c *IPConn) File() (f *os.File, err error)
-```
-
-###func (*IPConn) LocalAddr
-```go
-func (c *IPConn) LocalAddr() Addr
-```
-
-###func (*IPConn) Read
-```go
-func (c *IPConn) Read(b []byte) (int, error)
-```
-
-###func (*IPConn) ReadFrom
-```go
-func (c *IPConn) ReadFrom(b []byte) (int, Addr, error)
-```
-
-###func (*IPConn) ReadFromIP
-```go
-func (c *IPConn) ReadFromIP(b []byte) (int, *IPAddr, error)
-```
-
-###func (*IPConn) ReadMsgIP
-```go
-func (c *IPConn) ReadMsgIP(b, oob []byte) (n, oobn, flags int, addr *IPAddr, err error)
-```
-
-###func (*IPConn) RemoteAddr
-```go
-func (c *IPConn) RemoteAddr() Addr
-```
-
-###func (*IPConn) SetDeadline
-```go
-func (c *IPConn) SetDeadline(t time.Time) error
-```
-
-###func (*IPConn) SetReadBuffer
-```go
-func (c *IPConn) SetReadBuffer(bytes int) error
-```
-
-###func (*IPConn) SetReadDeadline
-```go
-func (c *IPConn) SetReadDeadline(t time.Time) error
-```
-
-###func (*IPConn) SetWriteBuffer
-```go
-func (c *IPConn) SetWriteBuffer(bytes int) error
-```
-
-###func (*IPConn) SetWriteDeadline
-```go
-func (c *IPConn) SetWriteDeadline(t time.Time) error
-```
-
-###func (*IPConn) Write
-```go
-func (c *IPConn) Write(b []byte) (int, error)
-```
-
-###func (*IPConn) WriteMsgIP
-```go
-func (c *IPConn) WriteMsgIP(b, oob []byte, addr *IPAddr) (n, oobn int, err error)
-```
-
-###func (*IPConn) WriteTo
-```go
-func (c *IPConn) WriteTo(b []byte, addr Addr) (int, error)
-```
-
-###func (*IPConn) WriteToIP
-```go
-func (c *IPConn) WriteToIP(b []byte, addr *IPAddr) (int, error)
-```
-
-###func CIDRMask
-```go
-func CIDRMask(ones, bits int) IPMask
-```
-
-###func IPv4Mask
-```go
-func IPv4Mask(a, b, c, d byte) IPMask
-```
-
-###func (IPMask) Size
-```go
-func (m IPMask) Size() (ones, bits int)
-```
-
-###func (IPMask) String
-```go
-func (m IPMask) String() string
-```
-
-###type IPNet struct
-```go
-type IPNet struct {
-    IP   IP     // network number
-    Mask IPMask // network mask
+type File interface {
+    io.Closer
+    io.Reader
+    Readdir(count int) ([]os.FileInfo, error)
+    Seek(offset int64, whence int) (int64, error)
+    Stat() (os.FileInfo, error)
 }
 ```
 
-###func (*IPNet) Contains
+###type FileSystem interface
 ```go
-func (n *IPNet) Contains(ip IP) bool
-```
-
-###func (*IPNet) Network
-```go
-func (n *IPNet) Network() string
-```
-
-###func (*IPNet) String
-```go
-func (n *IPNet) String() string
-```
-
-###type Interface struct
-```go
-type Interface struct {
-    Index        int          // positive integer that starts at one, zero is never used
-    MTU          int          // maximum transmission unit
-    Name         string       // e.g., "en0", "lo0", "eth0.100"
-    HardwareAddr HardwareAddr // IEEE MAC-48, EUI-48 and EUI-64 form
-    Flags        Flags        // e.g., FlagUp, FlagLoopback, FlagMulticast
+type FileSystem interface {
+    Open(name string) (File, error)
 }
 ```
 
-###func InterfaceByIndex
+###type Flusher interface
 ```go
-func InterfaceByIndex(index int) (*Interface, error)
-```
-
-###func InterfaceByName
-```go
-func InterfaceByName(name string) (*Interface, error)
-```
-
-###func (*Interface) Addrs
-```go
-func (ifi *Interface) Addrs() ([]Addr, error)
-```
-
-###func (*Interface) MulticastAddrs
-```go
-func (ifi *Interface) MulticastAddrs() ([]Addr, error)
-```
-
-###func (InvalidAddrError) Error
-```go
-func (e InvalidAddrError) Error() string
-```
-
-###func (InvalidAddrError) Temporary
-```go
-func (e InvalidAddrError) Temporary() bool
-```
-
-###func (InvalidAddrError) Timeout
-```go
-func (e InvalidAddrError) Timeout() bool
-```
-
-###type Listener interface
-```go
-type Listener interface {
-    // Accept waits for and returns the next connection to the listener.
-    Accept() (c Conn, err error)
-
-    // Close closes the listener.
-    // Any blocked Accept operations will be unblocked and return errors.
-    Close() error
-
-    // Addr returns the listener's network address.
-    Addr() Addr
+type Flusher interface {
+    // Flush sends any buffered data to the client.
+    Flush()
 }
 ```
 
-###func FileListener
+###type Handler interface
 ```go
-func FileListener(f *os.File) (l Listener, err error)
+type Handler interface {
+    ServeHTTP(ResponseWriter, *Request)
+}
 ```
 
-###func Listen
+###func FileServer
 ```go
-func Listen(net, laddr string) (Listener, error)
+func FileServer(root FileSystem) Handler
 ```
 
-###type MX struct
+###func NotFoundHandler
 ```go
-type MX struct {
+func NotFoundHandler() Handler
+```
+
+###func RedirectHandler
+```go
+func RedirectHandler(url string, code int) Handler
+```
+
+###func StripPrefix
+```go
+func StripPrefix(prefix string, h Handler) Handler
+```
+
+###func TimeoutHandler
+```go
+func TimeoutHandler(h Handler, dt time.Duration, msg string) Handler
+```
+
+###func (HandlerFunc) ServeHTTP
+```go
+func (f HandlerFunc) ServeHTTP(w ResponseWriter, r *Request)
+```
+
+###func (Header) Add
+```go
+func (h Header) Add(key, value string)
+```
+
+###func (Header) Del
+```go
+func (h Header) Del(key string)
+```
+
+###func (Header) Get
+```go
+func (h Header) Get(key string) string
+```
+
+###func (Header) Set
+```go
+func (h Header) Set(key, value string)
+```
+
+###func (Header) Write
+```go
+func (h Header) Write(w io.Writer) error
+```
+
+###func (Header) WriteSubset
+```go
+func (h Header) WriteSubset(w io.Writer, exclude map[string]bool) error
+```
+
+###type Hijacker interface
+```go
+type Hijacker interface {
+    // Hijack lets the caller take over the connection.
+    // After a call to Hijack(), the HTTP server library
+    // will not do anything else with the connection.
+    // It becomes the caller's responsibility to manage
+    // and close the connection.
+    Hijack() (net.Conn, *bufio.ReadWriter, error)
+}
+```
+
+###type ProtocolError struct
+```go
+type ProtocolError struct {
+    ErrorString string
+}
+```
+
+###func (*ProtocolError) Error
+```go
+func (err *ProtocolError) Error() string
+```
+
+###type Request struct
+```go
+type Request struct {
+    // Method specifies the HTTP method (GET, POST, PUT, etc.).
+    // For client requests an empty string means GET.
+    Method string
+
+    // URL specifies either the URI being requested (for server
+    // requests) or the URL to access (for client requests).
+    //
+    // For server requests the URL is parsed from the URI
+    // supplied on the Request-Line as stored in RequestURI.  For
+    // most requests, fields other than Path and RawQuery will be
+    // empty. (See RFC 2616, Section 5.1.2)
+    //
+    // For client requests, the URL's Host specifies the server to
+    // connect to, while the Request's Host field optionally
+    // specifies the Host header value to send in the HTTP
+    // request.
+    URL *url.URL
+
+    // The protocol version for incoming requests.
+    // Client requests always use HTTP/1.1.
+    Proto      string // "HTTP/1.0"
+    ProtoMajor int    // 1
+    ProtoMinor int    // 0
+
+    // A header maps request lines to their values.
+    // If the header says
+    //
+    //	accept-encoding: gzip, deflate
+    //	Accept-Language: en-us
+    //	Connection: keep-alive
+    //
+    // then
+    //
+    //	Header = map[string][]string{
+    //		"Accept-Encoding": {"gzip, deflate"},
+    //		"Accept-Language": {"en-us"},
+    //		"Connection": {"keep-alive"},
+    //	}
+    //
+    // HTTP defines that header names are case-insensitive.
+    // The request parser implements this by canonicalizing the
+    // name, making the first character and any characters
+    // following a hyphen uppercase and the rest lowercase.
+    //
+    // For client requests certain headers are automatically
+    // added and may override values in Header.
+    //
+    // See the documentation for the Request.Write method.
+    Header Header
+
+    // Body is the request's body.
+    //
+    // For client requests a nil body means the request has no
+    // body, such as a GET request. The HTTP Client's Transport
+    // is responsible for calling the Close method.
+    //
+    // For server requests the Request Body is always non-nil
+    // but will return EOF immediately when no body is present.
+    // The Server will close the request body. The ServeHTTP
+    // Handler does not need to.
+    Body io.ReadCloser
+
+    // ContentLength records the length of the associated content.
+    // The value -1 indicates that the length is unknown.
+    // Values >= 0 indicate that the given number of bytes may
+    // be read from Body.
+    // For client requests, a value of 0 means unknown if Body is not nil.
+    ContentLength int64
+
+    // TransferEncoding lists the transfer encodings from outermost to
+    // innermost. An empty list denotes the "identity" encoding.
+    // TransferEncoding can usually be ignored; chunked encoding is
+    // automatically added and removed as necessary when sending and
+    // receiving requests.
+    TransferEncoding []string
+
+    // Close indicates whether to close the connection after
+    // replying to this request (for servers) or after sending
+    // the request (for clients).
+    Close bool
+
+    // For server requests Host specifies the host on which the
+    // URL is sought. Per RFC 2616, this is either the value of
+    // the "Host" header or the host name given in the URL itself.
+    // It may be of the form "host:port".
+    //
+    // For client requests Host optionally overrides the Host
+    // header to send. If empty, the Request.Write method uses
+    // the value of URL.Host.
     Host string
-    Pref uint16
+
+    // Form contains the parsed form data, including both the URL
+    // field's query parameters and the POST or PUT form data.
+    // This field is only available after ParseForm is called.
+    // The HTTP client ignores Form and uses Body instead.
+    Form url.Values
+
+    // PostForm contains the parsed form data from POST or PUT
+    // body parameters.
+    // This field is only available after ParseForm is called.
+    // The HTTP client ignores PostForm and uses Body instead.
+    PostForm url.Values
+
+    // MultipartForm is the parsed multipart form, including file uploads.
+    // This field is only available after ParseMultipartForm is called.
+    // The HTTP client ignores MultipartForm and uses Body instead.
+    MultipartForm *multipart.Form
+
+    // Trailer specifies additional headers that are sent after the request
+    // body.
+    //
+    // For server requests the Trailer map initially contains only the
+    // trailer keys, with nil values. (The client declares which trailers it
+    // will later send.)  While the handler is reading from Body, it must
+    // not reference Trailer. After reading from Body returns EOF, Trailer
+    // can be read again and will contain non-nil values, if they were sent
+    // by the client.
+    //
+    // For client requests Trailer must be initialized to a map containing
+    // the trailer keys to later send. The values may be nil or their final
+    // values. The ContentLength must be 0 or -1, to send a chunked request.
+    // After the HTTP request is sent the map values can be updated while
+    // the request body is read. Once the body returns EOF, the caller must
+    // not mutate Trailer.
+    //
+    // Few HTTP clients, servers, or proxies support HTTP trailers.
+    Trailer Header
+
+    // RemoteAddr allows HTTP servers and other software to record
+    // the network address that sent the request, usually for
+    // logging. This field is not filled in by ReadRequest and
+    // has no defined format. The HTTP server in this package
+    // sets RemoteAddr to an "IP:port" address before invoking a
+    // handler.
+    // This field is ignored by the HTTP client.
+    RemoteAddr string
+
+    // RequestURI is the unmodified Request-URI of the
+    // Request-Line (RFC 2616, Section 5.1) as sent by the client
+    // to a server. Usually the URL field should be used instead.
+    // It is an error to set this field in an HTTP client request.
+    RequestURI string
+
+    // TLS allows HTTP servers and other software to record
+    // information about the TLS connection on which the request
+    // was received. This field is not filled in by ReadRequest.
+    // The HTTP server in this package sets the field for
+    // TLS-enabled connections before invoking a handler;
+    // otherwise it leaves the field nil.
+    // This field is ignored by the HTTP client.
+    TLS *tls.ConnectionState
 }
 ```
 
-###type NS struct
+###func NewRequest
 ```go
-type NS struct {
-    Host string
+func NewRequest(method, urlStr string, body io.Reader) (*Request, error)
+```
+
+###func ReadRequest
+```go
+func ReadRequest(b *bufio.Reader) (req *Request, err error)
+```
+
+###func (*Request) AddCookie
+```go
+func (r *Request) AddCookie(c *Cookie)
+```
+
+###func (*Request) Cookie
+```go
+func (r *Request) Cookie(name string) (*Cookie, error)
+```
+
+###func (*Request) Cookies
+```go
+func (r *Request) Cookies() []*Cookie
+```
+
+###func (*Request) FormFile
+```go
+func (r *Request) FormFile(key string) (multipart.File, *multipart.FileHeader, error)
+```
+
+###func (*Request) FormValue
+```go
+func (r *Request) FormValue(key string) string
+```
+
+###func (*Request) MultipartReader
+```go
+func (r *Request) MultipartReader() (*multipart.Reader, error)
+```
+
+###func (*Request) ParseForm
+```go
+func (r *Request) ParseForm() error
+```
+
+###func (*Request) ParseMultipartForm
+```go
+func (r *Request) ParseMultipartForm(maxMemory int64) error
+```
+
+###func (*Request) PostFormValue
+```go
+func (r *Request) PostFormValue(key string) string
+```
+
+###func (*Request) ProtoAtLeast
+```go
+func (r *Request) ProtoAtLeast(major, minor int) bool
+```
+
+###func (*Request) Referer
+```go
+func (r *Request) Referer() string
+```
+
+###func (*Request) SetBasicAuth
+```go
+func (r *Request) SetBasicAuth(username, password string)
+```
+
+###func (*Request) UserAgent
+```go
+func (r *Request) UserAgent() string
+```
+
+###func (*Request) Write
+```go
+func (r *Request) Write(w io.Writer) error
+```
+
+###func (*Request) WriteProxy
+```go
+func (r *Request) WriteProxy(w io.Writer) error
+```
+
+###type Response struct
+```go
+type Response struct {
+    Status     string // e.g. "200 OK"
+    StatusCode int    // e.g. 200
+    Proto      string // e.g. "HTTP/1.0"
+    ProtoMajor int    // e.g. 1
+    ProtoMinor int    // e.g. 0
+
+    // Header maps header keys to values.  If the response had multiple
+    // headers with the same key, they may be concatenated, with comma
+    // delimiters.  (Section 4.2 of RFC 2616 requires that multiple headers
+    // be semantically equivalent to a comma-delimited sequence.) Values
+    // duplicated by other fields in this struct (e.g., ContentLength) are
+    // omitted from Header.
+    //
+    // Keys in the map are canonicalized (see CanonicalHeaderKey).
+    Header Header
+
+    // Body represents the response body.
+    //
+    // The http Client and Transport guarantee that Body is always
+    // non-nil, even on responses without a body or responses with
+    // a zero-length body. It is the caller's responsibility to
+    // close Body.
+    //
+    // The Body is automatically dechunked if the server replied
+    // with a "chunked" Transfer-Encoding.
+    Body io.ReadCloser
+
+    // ContentLength records the length of the associated content.  The
+    // value -1 indicates that the length is unknown.  Unless Request.Method
+    // is "HEAD", values >= 0 indicate that the given number of bytes may
+    // be read from Body.
+    ContentLength int64
+
+    // Contains transfer encodings from outer-most to inner-most. Value is
+    // nil, means that "identity" encoding is used.
+    TransferEncoding []string
+
+    // Close records whether the header directed that the connection be
+    // closed after reading Body.  The value is advice for clients: neither
+    // ReadResponse nor Response.Write ever closes a connection.
+    Close bool
+
+    // Trailer maps trailer keys to values, in the same
+    // format as the header.
+    Trailer Header
+
+    // The Request that was sent to obtain this Response.
+    // Request's Body is nil (having already been consumed).
+    // This is only populated for Client requests.
+    Request *Request
+
+    // TLS contains information about the TLS connection on which the
+    // response was received. It is nil for unencrypted responses.
+    // The pointer is shared between responses and should not be
+    // modified.
+    TLS *tls.ConnectionState
 }
 ```
 
-###type OpError struct
+###func Get
 ```go
-type OpError struct {
-    // Op is the operation which caused the error, such as
-    // "read" or "write".
-    Op string
+func Get(url string) (resp *Response, err error)
+```
 
-    // Net is the network type on which this error occurred,
-    // such as "tcp" or "udp6".
-    Net string
+###func Head
+```go
+func Head(url string) (resp *Response, err error)
+```
 
-    // Addr is the network address on which this error occurred.
-    Addr Addr
+###func Post
+```go
+func Post(url string, bodyType string, body io.Reader) (resp *Response, err error)
+```
 
-    // Err is the error that occurred during the operation.
-    Err error
+###func PostForm
+```go
+func PostForm(url string, data url.Values) (resp *Response, err error)
+```
+
+###func ReadResponse
+```go
+func ReadResponse(r *bufio.Reader, req *Request) (*Response, error)
+```
+
+###func (*Response) Cookies
+```go
+func (r *Response) Cookies() []*Cookie
+```
+
+###func (*Response) Location
+```go
+func (r *Response) Location() (*url.URL, error)
+```
+
+###func (*Response) ProtoAtLeast
+```go
+func (r *Response) ProtoAtLeast(major, minor int) bool
+```
+
+###func (*Response) Write
+```go
+func (r *Response) Write(w io.Writer) error
+```
+
+###type ResponseWriter interface
+```go
+type ResponseWriter interface {
+    // Header returns the header map that will be sent by WriteHeader.
+    // Changing the header after a call to WriteHeader (or Write) has
+    // no effect.
+    Header() Header
+
+    // Write writes the data to the connection as part of an HTTP reply.
+    // If WriteHeader has not yet been called, Write calls WriteHeader(http.StatusOK)
+    // before writing the data.  If the Header does not contain a
+    // Content-Type line, Write adds a Content-Type set to the result of passing
+    // the initial 512 bytes of written data to DetectContentType.
+    Write([]byte) (int, error)
+
+    // WriteHeader sends an HTTP response header with status code.
+    // If WriteHeader is not called explicitly, the first call to Write
+    // will trigger an implicit WriteHeader(http.StatusOK).
+    // Thus explicit calls to WriteHeader are mainly used to
+    // send error codes.
+    WriteHeader(int)
 }
 ```
 
-###func (*OpError) Error
+###type RoundTripper interface
 ```go
-func (e *OpError) Error() string
-```
-
-###func (*OpError) Temporary
-```go
-func (e *OpError) Temporary() bool
-```
-
-###func (*OpError) Timeout
-```go
-func (e *OpError) Timeout() bool
-```
-
-###type PacketConn interface
-```go
-type PacketConn interface {
-    // ReadFrom reads a packet from the connection,
-    // copying the payload into b.  It returns the number of
-    // bytes copied into b and the return address that
-    // was on the packet.
-    // ReadFrom can be made to time out and return
-    // an error with Timeout() == true after a fixed time limit;
-    // see SetDeadline and SetReadDeadline.
-    ReadFrom(b []byte) (n int, addr Addr, err error)
-
-    // WriteTo writes a packet with payload b to addr.
-    // WriteTo can be made to time out and return
-    // an error with Timeout() == true after a fixed time limit;
-    // see SetDeadline and SetWriteDeadline.
-    // On packet-oriented connections, write timeouts are rare.
-    WriteTo(b []byte, addr Addr) (n int, err error)
-
-    // Close closes the connection.
-    // Any blocked ReadFrom or WriteTo operations will be unblocked and return errors.
-    Close() error
-
-    // LocalAddr returns the local network address.
-    LocalAddr() Addr
-
-    // SetDeadline sets the read and write deadlines associated
-    // with the connection.
-    SetDeadline(t time.Time) error
-
-    // SetReadDeadline sets the deadline for future Read calls.
-    // If the deadline is reached, Read will fail with a timeout
-    // (see type Error) instead of blocking.
-    // A zero value for t means Read will not time out.
-    SetReadDeadline(t time.Time) error
-
-    // SetWriteDeadline sets the deadline for future Write calls.
-    // If the deadline is reached, Write will fail with a timeout
-    // (see type Error) instead of blocking.
-    // A zero value for t means Write will not time out.
-    // Even if write times out, it may return n > 0, indicating that
-    // some of the data was successfully written.
-    SetWriteDeadline(t time.Time) error
+type RoundTripper interface {
+    // RoundTrip executes a single HTTP transaction, returning
+    // the Response for the request req.  RoundTrip should not
+    // attempt to interpret the response.  In particular,
+    // RoundTrip must return err == nil if it obtained a response,
+    // regardless of the response's HTTP status code.  A non-nil
+    // err should be reserved for failure to obtain a response.
+    // Similarly, RoundTrip should not attempt to handle
+    // higher-level protocol details such as redirects,
+    // authentication, or cookies.
+    //
+    // RoundTrip should not modify the request, except for
+    // consuming and closing the Body, including on errors. The
+    // request's URL and Header fields are guaranteed to be
+    // initialized.
+    RoundTrip(*Request) (*Response, error)
 }
 ```
 
-###func FilePacketConn
+###func NewFileTransport
 ```go
-func FilePacketConn(f *os.File) (c PacketConn, err error)
+func NewFileTransport(fs FileSystem) RoundTripper
 ```
 
-###func ListenPacket
+###type ServeMux struct
 ```go
-func ListenPacket(net, laddr string) (PacketConn, error)
-```
-
-###type ParseError struct
-```go
-type ParseError struct {
-    Type string
-    Text string
-}
-```
-
-###func (*ParseError) Error
-```go
-func (e *ParseError) Error() string
-```
-
-###type SRV struct
-```go
-type SRV struct {
-    Target   string
-    Port     uint16
-    Priority uint16
-    Weight   uint16
-}
-```
-
-###type TCPAddr struct
-```go
-type TCPAddr struct {
-    IP   IP
-    Port int
-    Zone string // IPv6 scoped addressing zone
-}
-```
-
-###func ResolveTCPAddr
-```go
-func ResolveTCPAddr(net, addr string) (*TCPAddr, error)
-```
-
-###func (*TCPAddr) Network
-```go
-func (a *TCPAddr) Network() string
-```
-
-###func (*TCPAddr) String
-```go
-func (a *TCPAddr) String() string
-```
-
-###type TCPConn struct
-```go
-type TCPConn struct {
+type ServeMux struct {
     // contains filtered or unexported fields
 }
 ```
 
-###func DialTCP
+###func NewServeMux
 ```go
-func DialTCP(net string, laddr, raddr *TCPAddr) (*TCPConn, error)
+func NewServeMux() *ServeMux
 ```
 
-###func (*TCPConn) Close
+###func (*ServeMux) Handle
 ```go
-func (c *TCPConn) Close() error
+func (mux *ServeMux) Handle(pattern string, handler Handler)
 ```
 
-###func (*TCPConn) CloseRead
+###func (*ServeMux) HandleFunc
 ```go
-func (c *TCPConn) CloseRead() error
+func (mux *ServeMux) HandleFunc(pattern string, handler func(ResponseWriter, *Request))
 ```
 
-###func (*TCPConn) CloseWrite
+###func (*ServeMux) Handler
 ```go
-func (c *TCPConn) CloseWrite() error
+func (mux *ServeMux) Handler(r *Request) (h Handler, pattern string)
 ```
 
-###func (*TCPConn) File
+###func (*ServeMux) ServeHTTP
 ```go
-func (c *TCPConn) File() (f *os.File, err error)
+func (mux *ServeMux) ServeHTTP(w ResponseWriter, r *Request)
 ```
 
-###func (*TCPConn) LocalAddr
+###type Server struct
 ```go
-func (c *TCPConn) LocalAddr() Addr
-```
+type Server struct {
+    Addr           string        // TCP address to listen on, ":http" if empty
+    Handler        Handler       // handler to invoke, http.DefaultServeMux if nil
+    ReadTimeout    time.Duration // maximum duration before timing out read of the request
+    WriteTimeout   time.Duration // maximum duration before timing out write of the response
+    MaxHeaderBytes int           // maximum size of request headers, DefaultMaxHeaderBytes if 0
+    TLSConfig      *tls.Config   // optional TLS config, used by ListenAndServeTLS
 
-###func (*TCPConn) Read
-```go
-func (c *TCPConn) Read(b []byte) (int, error)
-```
+    // TLSNextProto optionally specifies a function to take over
+    // ownership of the provided TLS connection when an NPN
+    // protocol upgrade has occurred.  The map key is the protocol
+    // name negotiated. The Handler argument should be used to
+    // handle HTTP requests and will initialize the Request's TLS
+    // and RemoteAddr if not already set.  The connection is
+    // automatically closed when the function returns.
+    TLSNextProto map[string]func(*Server, *tls.Conn, Handler)
 
-###func (*TCPConn) ReadFrom
-```go
-func (c *TCPConn) ReadFrom(r io.Reader) (int64, error)
-```
+    // ConnState specifies an optional callback function that is
+    // called when a client connection changes state. See the
+    // ConnState type and associated constants for details.
+    ConnState func(net.Conn, ConnState)
 
-###func (*TCPConn) RemoteAddr
-```go
-func (c *TCPConn) RemoteAddr() Addr
-```
-
-###func (*TCPConn) SetDeadline
-```go
-func (c *TCPConn) SetDeadline(t time.Time) error
-```
-
-###func (*TCPConn) SetKeepAlive
-```go
-func (c *TCPConn) SetKeepAlive(keepalive bool) error
-```
-
-###func (*TCPConn) SetKeepAlivePeriod
-```go
-func (c *TCPConn) SetKeepAlivePeriod(d time.Duration) error
-```
-
-###func (*TCPConn) SetLinger
-```go
-func (c *TCPConn) SetLinger(sec int) error
-```
-
-###func (*TCPConn) SetNoDelay
-```go
-func (c *TCPConn) SetNoDelay(noDelay bool) error
-```
-
-###func (*TCPConn) SetReadBuffer
-```go
-func (c *TCPConn) SetReadBuffer(bytes int) error
-```
-
-###func (*TCPConn) SetReadDeadline
-```go
-func (c *TCPConn) SetReadDeadline(t time.Time) error
-```
-
-###func (*TCPConn) SetWriteBuffer
-```go
-func (c *TCPConn) SetWriteBuffer(bytes int) error
-```
-
-###func (*TCPConn) SetWriteDeadline
-```go
-func (c *TCPConn) SetWriteDeadline(t time.Time) error
-```
-
-###func (*TCPConn) Write
-```go
-func (c *TCPConn) Write(b []byte) (int, error)
-```
-
-###type TCPListener struct
-```go
-type TCPListener struct {
+    // ErrorLog specifies an optional logger for errors accepting
+    // connections and unexpected behavior from handlers.
+    // If nil, logging goes to os.Stderr via the log package's
+    // standard logger.
+    ErrorLog *log.Logger
     // contains filtered or unexported fields
 }
 ```
 
-###func ListenTCP
+###func (*Server) ListenAndServe
 ```go
-func ListenTCP(net string, laddr *TCPAddr) (*TCPListener, error)
+func (srv *Server) ListenAndServe() error
 ```
 
-###func (*TCPListener) Accept
+###func (*Server) ListenAndServeTLS
 ```go
-func (l *TCPListener) Accept() (Conn, error)
+func (srv *Server) ListenAndServeTLS(certFile, keyFile string) error
 ```
 
-###func (*TCPListener) AcceptTCP
+###func (*Server) Serve
 ```go
-func (l *TCPListener) AcceptTCP() (*TCPConn, error)
+func (srv *Server) Serve(l net.Listener) error
 ```
 
-###func (*TCPListener) Addr
+###func (*Server) SetKeepAlivesEnabled
 ```go
-func (l *TCPListener) Addr() Addr
+func (s *Server) SetKeepAlivesEnabled(v bool)
 ```
 
-###func (*TCPListener) Close
+###type Transport struct
 ```go
-func (l *TCPListener) Close() error
-```
+type Transport struct {
 
-###func (*TCPListener) File
-```go
-func (l *TCPListener) File() (f *os.File, err error)
-```
+    // Proxy specifies a function to return a proxy for a given
+    // Request. If the function returns a non-nil error, the
+    // request is aborted with the provided error.
+    // If Proxy is nil or returns a nil *URL, no proxy is used.
+    Proxy func(*Request) (*url.URL, error)
 
-###func (*TCPListener) SetDeadline
-```go
-func (l *TCPListener) SetDeadline(t time.Time) error
-```
+    // Dial specifies the dial function for creating TCP
+    // connections.
+    // If Dial is nil, net.Dial is used.
+    Dial func(network, addr string) (net.Conn, error)
 
-###type UDPAddr struct
-```go
-type UDPAddr struct {
-    IP   IP
-    Port int
-    Zone string // IPv6 scoped addressing zone
-}
-```
+    // TLSClientConfig specifies the TLS configuration to use with
+    // tls.Client. If nil, the default configuration is used.
+    TLSClientConfig *tls.Config
 
-###func ResolveUDPAddr
-```go
-func ResolveUDPAddr(net, addr string) (*UDPAddr, error)
-```
+    // TLSHandshakeTimeout specifies the maximum amount of time waiting to
+    // wait for a TLS handshake. Zero means no timeout.
+    TLSHandshakeTimeout time.Duration
 
-###func (*UDPAddr) Network
-```go
-func (a *UDPAddr) Network() string
-```
+    // DisableKeepAlives, if true, prevents re-use of TCP connections
+    // between different HTTP requests.
+    DisableKeepAlives bool
 
-###func (*UDPAddr) String
-```go
-func (a *UDPAddr) String() string
-```
+    // DisableCompression, if true, prevents the Transport from
+    // requesting compression with an "Accept-Encoding: gzip"
+    // request header when the Request contains no existing
+    // Accept-Encoding value. If the Transport requests gzip on
+    // its own and gets a gzipped response, it's transparently
+    // decoded in the Response.Body. However, if the user
+    // explicitly requested gzip it is not automatically
+    // uncompressed.
+    DisableCompression bool
 
-###type UDPConn struct
-```go
-type UDPConn struct {
+    // MaxIdleConnsPerHost, if non-zero, controls the maximum idle
+    // (keep-alive) to keep per-host.  If zero,
+    // DefaultMaxIdleConnsPerHost is used.
+    MaxIdleConnsPerHost int
+
+    // ResponseHeaderTimeout, if non-zero, specifies the amount of
+    // time to wait for a server's response headers after fully
+    // writing the request (including its body, if any). This
+    // time does not include the time to read the response body.
+    ResponseHeaderTimeout time.Duration
     // contains filtered or unexported fields
 }
 ```
 
-###func DialUDP
+###func (*Transport) CancelRequest
 ```go
-func DialUDP(net string, laddr, raddr *UDPAddr) (*UDPConn, error)
+func (t *Transport) CancelRequest(req *Request)
 ```
 
-###func ListenMulticastUDP
+###func (*Transport) CloseIdleConnections
 ```go
-func ListenMulticastUDP(net string, ifi *Interface, gaddr *UDPAddr) (*UDPConn, error)
+func (t *Transport) CloseIdleConnections()
 ```
 
-###func ListenUDP
+###func (*Transport) RegisterProtocol
 ```go
-func ListenUDP(net string, laddr *UDPAddr) (*UDPConn, error)
+func (t *Transport) RegisterProtocol(scheme string, rt RoundTripper)
 ```
 
-###func (*UDPConn) Close
+###func (*Transport) RoundTrip
 ```go
-func (c *UDPConn) Close() error
-```
-
-###func (*UDPConn) File
-```go
-func (c *UDPConn) File() (f *os.File, err error)
-```
-
-###func (*UDPConn) LocalAddr
-```go
-func (c *UDPConn) LocalAddr() Addr
-```
-
-###func (*UDPConn) Read
-```go
-func (c *UDPConn) Read(b []byte) (int, error)
-```
-
-###func (*UDPConn) ReadFrom
-```go
-func (c *UDPConn) ReadFrom(b []byte) (int, Addr, error)
-```
-
-###func (*UDPConn) ReadFromUDP
-```go
-func (c *UDPConn) ReadFromUDP(b []byte) (n int, addr *UDPAddr, err error)
-```
-
-###func (*UDPConn) ReadMsgUDP
-```go
-func (c *UDPConn) ReadMsgUDP(b, oob []byte) (n, oobn, flags int, addr *UDPAddr, err error)
-```
-
-###func (*UDPConn) RemoteAddr
-```go
-func (c *UDPConn) RemoteAddr() Addr
-```
-
-###func (*UDPConn) SetDeadline
-```go
-func (c *UDPConn) SetDeadline(t time.Time) error
-```
-
-###func (*UDPConn) SetReadBuffer
-```go
-func (c *UDPConn) SetReadBuffer(bytes int) error
-```
-
-###func (*UDPConn) SetReadDeadline
-```go
-func (c *UDPConn) SetReadDeadline(t time.Time) error
-```
-
-###func (*UDPConn) SetWriteBuffer
-```go
-func (c *UDPConn) SetWriteBuffer(bytes int) error
-```
-
-###func (*UDPConn) SetWriteDeadline
-```go
-func (c *UDPConn) SetWriteDeadline(t time.Time) error
-```
-
-###func (*UDPConn) Write
-```go
-func (c *UDPConn) Write(b []byte) (int, error)
-```
-
-###func (*UDPConn) WriteMsgUDP
-```go
-func (c *UDPConn) WriteMsgUDP(b, oob []byte, addr *UDPAddr) (n, oobn int, err error)
-```
-
-###func (*UDPConn) WriteTo
-```go
-func (c *UDPConn) WriteTo(b []byte, addr Addr) (int, error)
-```
-
-###func (*UDPConn) WriteToUDP
-```go
-func (c *UDPConn) WriteToUDP(b []byte, addr *UDPAddr) (int, error)
-```
-
-###type UnixAddr struct
-```go
-type UnixAddr struct {
-    Name string
-    Net  string
-}
-```
-
-###func ResolveUnixAddr
-```go
-func ResolveUnixAddr(net, addr string) (*UnixAddr, error)
-```
-
-###func (*UnixAddr) Network
-```go
-func (a *UnixAddr) Network() string
-```
-
-###func (*UnixAddr) String
-```go
-func (a *UnixAddr) String() string
-```
-
-###type UnixConn struct
-```go
-type UnixConn struct {
-    // contains filtered or unexported fields
-}
-```
-
-###func DialUnix
-```go
-func DialUnix(net string, laddr, raddr *UnixAddr) (*UnixConn, error)
-```
-
-###func ListenUnixgram
-```go
-func ListenUnixgram(net string, laddr *UnixAddr) (*UnixConn, error)
-```
-
-###func (*UnixConn) Close
-```go
-func (c *UnixConn) Close() error
-```
-
-###func (*UnixConn) CloseRead
-```go
-func (c *UnixConn) CloseRead() error
-```
-
-###func (*UnixConn) CloseWrite
-```go
-func (c *UnixConn) CloseWrite() error
-```
-
-###func (*UnixConn) File
-```go
-func (c *UnixConn) File() (f *os.File, err error)
-```
-
-###func (*UnixConn) LocalAddr
-```go
-func (c *UnixConn) LocalAddr() Addr
-```
-
-###func (*UnixConn) Read
-```go
-func (c *UnixConn) Read(b []byte) (int, error)
-```
-
-###func (*UnixConn) ReadFrom
-```go
-func (c *UnixConn) ReadFrom(b []byte) (int, Addr, error)
-```
-
-###func (*UnixConn) ReadFromUnix
-```go
-func (c *UnixConn) ReadFromUnix(b []byte) (n int, addr *UnixAddr, err error)
-```
-
-###func (*UnixConn) ReadMsgUnix
-```go
-func (c *UnixConn) ReadMsgUnix(b, oob []byte) (n, oobn, flags int, addr *UnixAddr, err error)
-```
-
-###func (*UnixConn) RemoteAddr
-```go
-func (c *UnixConn) RemoteAddr() Addr
-```
-
-###func (*UnixConn) SetDeadline
-```go
-func (c *UnixConn) SetDeadline(t time.Time) error
-```
-
-###func (*UnixConn) SetReadBuffer
-```go
-func (c *UnixConn) SetReadBuffer(bytes int) error
-```
-
-###func (*UnixConn) SetReadDeadline
-```go
-func (c *UnixConn) SetReadDeadline(t time.Time) error
-```
-
-###func (*UnixConn) SetWriteBuffer
-```go
-func (c *UnixConn) SetWriteBuffer(bytes int) error
-```
-
-###func (*UnixConn) SetWriteDeadline
-```go
-func (c *UnixConn) SetWriteDeadline(t time.Time) error
-```
-
-###func (*UnixConn) Write
-```go
-func (c *UnixConn) Write(b []byte) (int, error)
-```
-
-###func (*UnixConn) WriteMsgUnix
-```go
-func (c *UnixConn) WriteMsgUnix(b, oob []byte, addr *UnixAddr) (n, oobn int, err error)
-```
-
-###func (*UnixConn) WriteTo
-```go
-func (c *UnixConn) WriteTo(b []byte, addr Addr) (n int, err error)
-```
-
-###func (*UnixConn) WriteToUnix
-```go
-func (c *UnixConn) WriteToUnix(b []byte, addr *UnixAddr) (n int, err error)
-```
-
-###type UnixListener struct
-```go
-type UnixListener struct {
-    // contains filtered or unexported fields
-}
-```
-
-###func ListenUnix
-```go
-func ListenUnix(net string, laddr *UnixAddr) (*UnixListener, error)
-```
-
-###func (*UnixListener) Accept
-```go
-func (l *UnixListener) Accept() (c Conn, err error)
-```
-
-###func (*UnixListener) AcceptUnix
-```go
-func (l *UnixListener) AcceptUnix() (*UnixConn, error)
-```
-
-###func (*UnixListener) Addr
-```go
-func (l *UnixListener) Addr() Addr
-```
-
-###func (*UnixListener) Close
-```go
-func (l *UnixListener) Close() error
-```
-
-###func (*UnixListener) File
-```go
-func (l *UnixListener) File() (f *os.File, err error)
-```
-
-###func (*UnixListener) SetDeadline
-```go
-func (l *UnixListener) SetDeadline(t time.Time) (err error)
-```
-
-###func (UnknownNetworkError) Error
-```go
-func (e UnknownNetworkError) Error() string
-```
-
-###func (UnknownNetworkError) Temporary
-```go
-func (e UnknownNetworkError) Temporary() bool
-```
-
-###func (UnknownNetworkError) Timeout
-```go
-func (e UnknownNetworkError) Timeout() bool
+func (t *Transport) RoundTrip(req *Request) (resp *Response, err error)
 ```
 
