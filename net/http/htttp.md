@@ -570,11 +570,27 @@ func StripPrefix(prefix string, h Handler) Handler
 ```go
 func TimeoutHandler(h Handler, dt time.Duration, msg string) Handler
 ```
+TimeoutHandler返回一个Handler，它运行带有给定时间限制的`h`。
+
+新的Handler调用h.ServeHTTP来处理每个请求，但是如果一个调用运行超过了时间限制，Handler回应503 Service Unavailable错误和body中给出的信息。（如果信息为空的，则会发送一个适当的默认信息）。在这个超时之后，h向它的ResponseWriter写入的writes会返回ErrHandlerTimeout。
+
+###type HandlerFunc
+```go
+type HandlerFunc func(ResponseWriter, *Request)
+```
+HandlerFunc是一个适配器来允许使用普通的函数函数作为HTTP handlers。如果函数带有合适的签名，HandlerFunc(f)是调用f的Handler类型。
 
 ###func (HandlerFunc) ServeHTTP
 ```go
 func (f HandlerFunc) ServeHTTP(w ResponseWriter, r *Request)
 ```
+ServeHTTP 调用`f(w,r)`。
+
+###type Header
+```go
+type Header map[string][]string
+```
+一个Header类型的数据代表HTTP 头中的键值对。
 
 ###func (Header) Add
 ```go
@@ -605,6 +621,7 @@ func (h Header) Write(w io.Writer) error
 ```go
 func (h Header) WriteSubset(w io.Writer, exclude map[string]bool) error
 ```
+WriteSubset以wire格式写入头部。如果`exclude`不是空的，满足 exclude[key] == true的keys不会写入。
 
 ###type Hijacker interface
 ```go
