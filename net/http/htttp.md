@@ -145,7 +145,7 @@ func CanonicalHeaderKey(s string) string
 ```go
 func DetectContentType(data []byte) string
 ```
-实现了http://mimesniff.spec.whatwg.org描述的算法，用来确定给定数据的内容类型。它考虑了最多512字节的数据。DetectContentType常常返回一个有效的MIME类型：如果它无法确定一个具体的类型，它返回` "application/octet-stream"`。
+实现了`http://mimesniff.spec.whatwg.org`描述的算法，用来确定给定数据的内容类型。它考虑了最多512字节的数据。DetectContentType常常返回一个有效的MIME类型：如果它无法确定一个具体的类型，它返回` "application/octet-stream"`。
 
 ###func Error
 ```go
@@ -442,6 +442,7 @@ type File interface {
     Stat() (os.FileInfo, error)
 }
 ```
+File是FileSystem 的Open方法返回的，它可以通过FileServer的实现来提供服务。其方法应该和*os.File的方法行为一样。
 
 ###type FileSystem interface
 ```go
@@ -449,6 +450,7 @@ type FileSystem interface {
     Open(name string) (File, error)
 }
 ```
+FileSystem 实现了获取一系列有名字的文件的方法。在文件路径中的元素用正斜杠('/', U+002F) 字符分隔，忽略主机操作系统的转换。
 
 ###type Flusher interface
 ```go
