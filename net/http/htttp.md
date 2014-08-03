@@ -997,11 +997,13 @@ PostForm是DefaultClient.PostForm的封装。
 ```go
 func ReadResponse(r *bufio.Reader, req *Request) (*Response, error)
 ```
+func ReadResponse从`r`读取并返回一个HTTP 响应。req参数根据需要确定了和这个响应符合的request。如果是空的，那么假设为GET请求。当完成了resp.Body的读取后，客户端必须调用resp.Body.Close。调用之后，额客户端可以检查 resp.Trailer来找到响应trailer中的键值对。
 
 ###func (*Response) Cookies
 ```go
 func (r *Response) Cookies() []*Cookie
 ```
+解析并返回在Set-Cookie头中的cookies。
 
 ###func (*Response) Location
 ```go
@@ -1017,6 +1019,19 @@ func (r *Response) ProtoAtLeast(major, minor int) bool
 ```go
 func (r *Response) Write(w io.Writer) error
 ```
+向响应（header、body和trailer）以wire格式写入。这个方法考虑了以下的响应域:
+```go
+StatusCode
+ProtoMajor
+ProtoMinor
+Request.Method
+TransferEncoding
+Trailer
+Body
+ContentLength
+Header, values for non-canonical keys will have unpredictable behavior
+```
+在它发送之后，Body关闭。
 
 ###type ResponseWriter interface
 ```go
@@ -1041,6 +1056,7 @@ type ResponseWriter interface {
     WriteHeader(int)
 }
 ```
+ResponseWriter 接口被HTTP handler用来构建HTTP 响应。
 
 ###type RoundTripper interface
 ```go
@@ -1084,11 +1100,13 @@ func NewServeMux() *ServeMux
 ```go
 func (mux *ServeMux) Handle(pattern string, handler Handler)
 ```
+根据给定的patter注册了handler。如果已经存在与patter对应的handler,Handle引发异常。
 
 ###func (*ServeMux) HandleFunc
 ```go
 func (mux *ServeMux) HandleFunc(pattern string, handler func(ResponseWriter, *Request))
 ```
+根据给定pattern，注册了handler函数。
 
 ###func (*ServeMux) Handler
 ```go
@@ -1099,6 +1117,7 @@ func (mux *ServeMux) Handler(r *Request) (h Handler, pattern string)
 ```go
 func (mux *ServeMux) ServeHTTP(w ResponseWriter, r *Request)
 ```
+ServeHTTP向最匹配请求URL的handler分发请求。
 
 ###type Server struct
 ```go
@@ -1132,11 +1151,13 @@ type Server struct {
     // contains filtered or unexported fields
 }
 ```
+Server定义了启动HTTP 服务器的参数。零值的Server是有效的配置。
 
 ###func (*Server) ListenAndServe
 ```go
 func (srv *Server) ListenAndServe() error
 ```
+ListenAndServe监听TCP网络地址srv.Addr，然后调用Serve来处理到达的请求。如果srv.Addr是blank，那么使用“.http”。
 
 ###func (*Server) ListenAndServeTLS
 ```go
@@ -1208,6 +1229,7 @@ type Transport struct {
 ```go
 func (t *Transport) CancelRequest(req *Request)
 ```
+CancelRequest通过关闭连接取消了in-flight 请求。
 
 ###func (*Transport) CloseIdleConnections
 ```go
@@ -1223,4 +1245,6 @@ func (t *Transport) RegisterProtocol(scheme string, rt RoundTripper)
 ```go
 func (t *Transport) RoundTrip(req *Request) (resp *Response, err error)
 ```
+RoundTrip实现了RoundTripper接口。
 
+为了高层的HTTP客户端支持（比如处理cookies和redirects），请看 Get、 Post、 和 the Client type。
