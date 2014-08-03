@@ -340,21 +340,44 @@ Do发送一个HTTP request并返回HTTP响应，在客户端配置的策略（�
 ```go
 func (c *Client) Get(url string) (resp *Response, err error)
 ```
+Get分发指定URL的GET请求。如果响应是以下重定向码，Get跟在重定向后面，最多10个重定向：
+```go
+301 (Moved Permanently)
+302 (Found)
+303 (See Other)
+307 (Temporary Redirect)
+```
+如果有太多的重定向或者有HTTP 协议错误，将会返回一个错误。一个non-2xx响应不会引起错误。
+
+当`err`为空，`resp`常常包含一个non-nil resp.Body。当完成了从resp.Body读数据，调用者应该关闭它。
 
 ###func (*Client) Head
 ```go
 func (c *Client) Head(url string) (resp *Response, err error)
+```
+Head向指定的URL分发HEAD。如果响应是以下的重定向码，Head调用客户端的CheckRedirect函数后跟随重定向：
+```go
+301 (Moved Permanently)
+302 (Found)
+303 (See Other)
+307 (Temporary Redirect)
 ```
 
 ###func (*Client) Post
 ```go
 func (c *Client) Post(url string, bodyType string, body io.Reader) (resp *Response, err error)
 ```
+Post分发指定的URL的POST请求。当完成了从resp.Body读数据，调用者应该关闭它。
+
+如果给定的body也是一个io.Closer，在请求后会关闭。
 
 ###func (*Client) PostForm
 ```go
 func (c *Client) PostForm(url string, data url.Values) (resp *Response, err error)
 ```
+PostForm分发一个指定URL的POST请求，它带有`data`的keys和URL-encoded 的values作为请求体。
+
+当`err`为空，`resp`常常包含一个non-nil resp.Body。当完成了从resp.Body读数据，调用者应该关闭它。
 
 ###type CloseNotifier interface
 ```go
@@ -421,15 +444,11 @@ type CookieJar interface {
 ```go
 type Dir string
 ```
-Dir使用限制在具体的目录树的本地文件系统实现了http.FileSystem。
-
-空Dir会作为`"."`。
+Dir使用限制在具体的目录树的本地文件系统实现了http.FileSystem。空Dir会作为`"."`。
 
 ###func (Dir) Open
 ```go
-func (d Dir) Open(name string) (File, error)
-```
-
+func (d Dir) Open(name string) (File, error)```
 
 ###type File interface
 ```go
@@ -489,16 +508,19 @@ http.Handle("/", http.FileServer(http.Dir("/tmp")))
 ```go
 func NotFoundHandler() Handler
 ```
+返回一个简单的请求handler，它用404 page not found来回复每个请求。
 
 ###func RedirectHandler
 ```go
 func RedirectHandler(url string, code int) Handler
 ```
+RedirectHandler返回一个简单的请求handler，它使用给定的状态码对应的url重定向每个请求。
 
 ###func StripPrefix
 ```go
 func StripPrefix(prefix string, h Handler) Handler
 ```
+StripPrefix返回一个handler，它通过从请求的url的路径去掉给定的前缀并处罚handler h来提供服务。如果请求路径不以prefix为前缀，StripPrefix 用 HTTP 404 not found error处理它们。 
 
 ###func TimeoutHandler
 ```go
@@ -558,11 +580,13 @@ func (h Header) Get(key string) string
 ```go
 func (h Header) Set(key, value string)
 ```
+设置头条目相关联的键为单值。如果存在key对应的值，则替换。
 
 ###func (Header) Write
 ```go
 func (h Header) Write(w io.Writer) error
 ```
+以wire格式写入header。
 
 ###func (Header) WriteSubset
 ```go
@@ -619,41 +643,51 @@ type Request struct {
 ```go
 func NewRequest(method, urlStr string, body io.Reader) (*Request, error)
 ```
+给定method、URL和可选的body，NewRequest返回一个新的请求。
+
+如果给定的body也是一个io.Closer，返回的Request.Body设为body，并且会被 Client 方法 Do、 Post和 PostForm以及Transport.RoundTrip关闭。
 
 ###func ReadRequest
 ```go
 func ReadRequest(b *bufio.Reader) (req *Request, err error)
 ```
+ReadRequest读取并解析`b`的请求。
 
 ###func (*Request) AddCookie
 ```go
 func (r *Request) AddCookie(c *Cookie)
 ```
+AddCookie向请求加入cookie。每个RFC 6265 section 5.4，AddCookie不会加入多于一个Cookie头域。这意味着所有的cookies，都被写入同一行，用分号隔开。
 
 ###func (*Request) Cookie
 ```go
 func (r *Request) Cookie(name string) (*Cookie, error)
 ```
+返回请求中命名的cookie或者ErrNoCookie错误，如果没有找到。
 
 ###func (*Request) Cookies
 ```go
 func (r *Request) Cookies() []*Cookie
 ```
+解析并返回在请求中发送的HTTP cookies 。
 
 ###func (*Request) FormFile
 ```go
 func (r *Request) FormFile(key string) (multipart.File, *multipart.FileHeader, error)
 ```
+FormFile返回`key`对应的第一个文件。如果有必要，FormFile调用ParseMultipartForm 和 ParseForm 。
 
 ###func (*Request) FormValue
 ```go
 func (r *Request) FormValue(key string) string
 ```
+返回与query中的命名的成员对应的第一个值。POST和PUT body 参数优先于URL query字符串值。如果有必要，FormValue 调用ParseMultipartForm 和 ParseForm。为了获得同一个key对应的更多的值，使用ParseFom。
 
 ###func (*Request) MultipartReader
 ```go
 func (r *Request) MultipartReader() (*multipart.Reader, error)
 ```
+如果这是一个 multipart/form-data的POST请求，MultipartReader返回一个MIME多部分的reader，或者返回nil和一个错误。使用这个函数而不是ParseMultipartForm 来将请求体作为流来处理。
 
 ###func (*Request) ParseForm
 ```go
@@ -671,17 +705,19 @@ ParseMultipartForm自动调用ParseForm。它是独立的。
 ```go
 func (r *Request) ParseMultipartForm(maxMemory int64) error
 ```
-ParseMultipartForm解析多组件的 request或者 form-data型的 request。整个 request的 body都会被解析，文件中最多有maxMemory字节的被存储在内存中，其余存储在临时文件中。如果需要 ParseMultipartForm会自行调用 ParseForm。调用完 ParseMultipartForm，后续的各种方法的调用不受影响。
+ParseMultipartForm解析 multipart/form-data的 request。整个 request的 body都会被解析，文件中最多有maxMemory字节的被存储在内存中，其余存储在临时文件中。如果需要 ParseMultipartForm会自行调用 ParseForm。调用完 ParseMultipartForm，后续的各种方法的调用不受影响。
 
 ###func (*Request) PostFormValue
 ```go
 func (r *Request) PostFormValue(key string) string
 ```
+对于POST或者PUT中命名的成员，PostFormValue返回它的第一个值。忽略URL query参数。如果有必要，PostFormValue调用ParseMultipartForm 和 ParseForm。
 
 ###func (*Request) ProtoAtLeast
 ```go
 func (r *Request) ProtoAtLeast(major, minor int) bool
 ```
+ProtoAtLeast返回 request使用的协议是否不低于 major.minor指定的版本。
 
 ###func (*Request) Referer
 ```go
@@ -702,11 +738,23 @@ SetBasicAuth设置request的Authorization header以便使用HTTP Basic Authentic
 ```go
 func (r *Request) UserAgent() string
 ```
+如果在请求中发送client的User-Agent，则返回它。
 
 ###func (*Request) Write
 ```go
 func (r *Request) Write(w io.Writer) error
 ```
+Write写入HTTP/1.1请求的头和体，以wire格式。它考虑以下的请求域：
+```go
+Host
+URL
+Method (defaults to "GET")
+Header
+ContentLength
+TransferEncoding
+Body
+```
+如果有Body，Content-Length<=0，TransferEncoding 没有被设为”identity“，Write向头部加入Transfer-Encoding: chunked。在它被发送之后，Body被关闭。
 
 ###func (*Request) WriteProxy
 ```go
@@ -754,6 +802,14 @@ Get是DefaultClient.Get的封装。
 ```go
 func Head(url string) (resp *Response, err error)
 ```
+Head向指定的URL分发HEAD。如果响应是以下的重定向码，Head调用客户端的CheckRedirect函数后跟随重定向：
+```go
+301 (Moved Permanently)
+302 (Found)
+303 (See Other)
+307 (Temporary Redirect)
+```
+Head是DefaultClient.Head的封装。
 
 ###func Post
 ```go
@@ -833,20 +889,6 @@ ResponseWriter 接口被HTTP handler用来构建HTTP 响应。
 ###type RoundTripper interface
 ```go
 type RoundTripper interface {
-    // RoundTrip executes a single HTTP transaction, returning
-    // the Response for the request req.  RoundTrip should not
-    // attempt to interpret the response.  In particular,
-    // RoundTrip must return err == nil if it obtained a response,
-    // regardless of the response's HTTP status code.  A non-nil
-    // err should be reserved for failure to obtain a response.
-    // Similarly, RoundTrip should not attempt to handle
-    // higher-level protocol details such as redirects,
-    // authentication, or cookies.
-    //
-    // RoundTrip should not modify the request, except for
-    // consuming and closing the Body, including on errors. The
-    // request's URL and Header fields are guaranteed to be
-    // initialized.
     RoundTrip(*Request) (*Response, error)
 }
 ```
@@ -946,11 +988,14 @@ func (srv *Server) ListenAndServeTLS(certFile, keyFile string) error
 ```go
 func (srv *Server) Serve(l net.Listener) error
 ```
+Serve在Listener `l`上接收连接，为每一个连接创建一个goroutine。goroutine读取请求然后调用srv.Handler来回复它们。
 
 ###func (*Server) SetKeepAlivesEnabled
 ```go
 func (s *Server) SetKeepAlivesEnabled(v bool)
 ```
+SetKeepAlivesEnabled控制HTTP keep-alive是否生效。默认情况下，keep-alive常常是使能的。只有在资源非常有限的环境或者服务器正在关闭时才应该禁用它们。
+
 
 ###type Transport struct
 ```go
@@ -976,11 +1021,15 @@ CancelRequest通过关闭连接取消了in-flight 请求。
 ```go
 func (t *Transport) CloseIdleConnections()
 ```
+CloseIdleConnections关闭任意一个这样的连接：它在上一次请求连接，但是现在却在keep-alive无所事事。它不会打断正在使用的连接。
 
 ###func (*Transport) RegisterProtocol
 ```go
 func (t *Transport) RegisterProtocol(scheme string, rt RoundTripper)
 ```
+RegisterProtocol用scheme注册了一个新的协议。Transport会使用给定的scheme向`rt`传递请求。`rt`有责任模拟HTTP请求的语义。
+
+RegisterProtocol可以被其他包使用来提供像ftp或者file这样的协议方案。
 
 ###func (*Transport) RoundTrip
 ```go
