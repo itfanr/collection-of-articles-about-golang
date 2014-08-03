@@ -522,6 +522,7 @@ ServeHTTP 调用`f(w,r)`。
 
 >这里需要多回味一下了，这个HandlerFunc定义和ServeHTTP合起来是说明了什么？说明HandlerFunc的所有实例是实现了ServeHttp方法的。另，实现了ServeHttp方法就是什么？实现了接口Handler!
 所以你以后会看到很多这样的代码：
+
 ```go
 func AdminHandler(w ResponseWriter, r *Request) {
     ...
@@ -529,6 +530,7 @@ func AdminHandler(w ResponseWriter, r *Request) {
 handler := HandlerFunc(AdminHandler)
 handler.ServeHttp(w,r)
  ```
+ 
 >请不要讶异，你明明没有写ServeHttp，怎么能调用呢？ 实际上调用ServeHttp就是调用AdminHandler。
 
 ###type Header
