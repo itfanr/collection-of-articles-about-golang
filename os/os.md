@@ -1,5 +1,6 @@
 ﻿#os包
 
+import "os"
 ---
 
 ##简介
@@ -14,46 +15,57 @@
 ```go
 func Chdir(dir string) error
 ```
+切换到`dir`目录。如果出现错误，返回的错误类型为 *PathError类型。
 
 ###func Chmod
 ```go
 func Chmod(name string, mode FileMode) error
 ```
+改变名为`name`文件的mode为`mode`。如果文件是一个符号链接，它会改变链接目标文件的mode。如果出现错误，返回的错误类型为 *PathError类型。
 
 ###func Chown
 ```go
 func Chown(name string, uid, gid int) error
 ```
+改变名为`name`文件的`uid`和`gid`。如果文件是一个符号链接，它会改变链接目标文件的`uid`和`gid`。如果出现错误，返回的错误类型为 *PathError类型。
 
 ###func Chtimes
 ```go
 func Chtimes(name string, atime time.Time, mtime time.Time) error
 ```
+Chtimes 改变访问和修改名为`name`文件的时间，类似于Unix的utime()和utimes()函数。
+
+底层文件系统可能取值的truncate或者round来降低时间单元的准确性。如果出现错误，返回的错误类型为 *PathError类型。
 
 ###func Clearenv
 ```go
 func Clearenv()
 ```
+删除所有的环境变量。
 
 ###func Environ
 ```go
 func Environ() []string
 ```
+返回环境变量，形式为“key=value”。
 
 ###func Exit
 ```go
 func Exit(code int)
 ```
+Exit引起当前程序退出并给出状态码。按照惯例，0代表成功，非零代表错误。程序立马退出，defer函数不会执行。
 
 ###func Expand
 ```go
 func Expand(s string, mapping func(string) string) string
 ```
+Expand用mapping 函数指定的规则替换字符串中的${var}或者$var。比如，os.ExpandEnv(s)等效于os.Expand(s, os.Getenv)。
 
 ###func ExpandEnv
 ```go
 func ExpandEnv(s string) string
 ```
+ExpandEnv根据当前环境变量的值来替换字符串中的${var}或者$var。如果引用变量没有定义，则用空字符串替换。
 
 ###func Getegid
 ```go
