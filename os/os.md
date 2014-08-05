@@ -1,6 +1,7 @@
 ﻿#os包
 
 import "os"
+
 ---
 
 ##简介
@@ -34,7 +35,7 @@ if err != nil {
 fmt.Printf("read %d bytes: %q\n", count, data[:count])
 ```
 
-###变量
+##变量
 
 
 ###func Chdir
@@ -376,11 +377,13 @@ func (file *File) Stat() (fi FileInfo, err error)
 ```go
 func (f *File) Sync() (err error)
 ```
+向稳定的存储提交文件的当前内容。典型情况下，这意味着冲刷底层系统的内存的近期数据到硬盘。
 
 ###func (*File) Truncate
 ```go
 func (f *File) Truncate(size int64) error
 ```
+Truncate改变文件的大小。它不会改变I/O偏移。如果出错，将是 *PathError类型。
 
 ###func (*File) Write
 ```go
@@ -396,6 +399,7 @@ func (f *File) WriteAt(b []byte, off int64) (n int, err error)
 ```go
 func (f *File) WriteString(s string) (ret int, err error)
 ```
+WriteString像Write，但是写入的是字符串`s`的内容而不是字节切片。
 
 ###type FileInfo interface
 ```go
@@ -408,16 +412,19 @@ type FileInfo interface {
     Sys() interface{}   // underlying data source (can return nil)
 }
 ```
+FileInfo描述了一个文件，并通过Stat和Lstat返回。
 
 ###func Lstat
 ```go
 func Lstat(name string) (fi FileInfo, err error)
 ```
+返回描述文件的FileInfo信息。如果文件是符号链接，返回的FileInfo描述的符号链接。Lstat不会试着去追溯link。如果出错，将是 *PathError类型。
 
 ###func Stat
 ```go
 func Stat(name string) (fi FileInfo, err error)
 ```
+返回描述文件的FileInfo信息。如果出错，将是 *PathError类型。
 
 ###func (FileMode) IsDir
 ```go
@@ -569,6 +576,7 @@ type Signal interface {
     Signal() // to distinguish from other Stringers
 }
 ```
+代表操作系统的信号。底层的实现是操作系统独立的：在Unix是syscal.Signal。
 
 ###type SyscallError struct
 ```go
@@ -577,6 +585,7 @@ type SyscallError struct {
     Err     error
 }
 ```
+SyscallError记录了一个特定系统调用的错误。
 
 ###func (*SyscallError) Error
 ```go
