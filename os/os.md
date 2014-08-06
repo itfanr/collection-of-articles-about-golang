@@ -357,21 +357,33 @@ func (f *File) ReadAt(b []byte, off int64) (n int, err error)
 ```go
 func (f *File) Readdir(n int) (fi []FileInfo, err error)
 ```
+Readdir读取file指定的目录的内容，然后返回一个切片，它最多包含`n`个FileInfo值，这些值可能是按照目录顺序的Lstat返回的。接下来调用相同的文件会产生更多的FileInfos。
+
+如果n>0，Readdir返回最多`n`个FileInfo结构。在这种情况下，如果Readdir返回一个空的切片，它将会返回一个非空的错误来解释原因。在目录的结尾，错误将会是io.EOF。
+
+如果n<=0，Readdir返回目录的所有的FileInfo，用一个切片表示。在这种情况下，如果Readdir成功（读取直到目录的结尾），它会返回切片和一个空的错误。如果它在目录的结尾前遇到了一个错误，Readdir返回直到当前所读到的FIleInfo和一个非空的错误。
 
 ###func (*File) Readdirnames
 ```go
 func (f *File) Readdirnames(n int) (names []string, err error)
 ```
+Readdirnames读取并返回目录`f`里面的文件的名字切片。
+
+如果n>0，Readdirnames返回最多n个名字。在这种情况下，如果Readdirnames返回一个空的切片，它会返回一个非空的错误来解释原因。在目录的结尾，错误为EOF。
+
+如果n<0，Readdirnames返回目录下所有的文件的名字，用一个切片表示。在这种情况下，如果用一个切片表示成功（读取直到目录结尾），它返回切片和一个空的错误。如果在目录结尾之前遇到了一个错误，Readdirnames返回直到当前所读到的`names`和一个非空的错误。
 
 ###func (*File) Seek
 ```go
 func (f *File) Seek(offset int64, whence int) (ret int64, err error)
 ```
+Seek设置下一次读或写操作的偏移量`offset`，根据`whence`来解析：0意味着相对于文件的原始位置，1意味着相对于当前偏移量，2意味着相对于文件结尾。它返回新的偏移量和错误（如果存在）。
 
 ###func (*File) Stat
 ```go
 func (file *File) Stat() (fi FileInfo, err error)
 ```
+返回描述文件的FileInfo结构。如果出错，将会是*PathError错误。
 
 ###func (*File) Sync
 ```go
@@ -426,20 +438,53 @@ func Stat(name string) (fi FileInfo, err error)
 ```
 返回描述文件的FileInfo信息。如果出错，将是 *PathError类型。
 
+###type FileMode
+```go
+type FileMode uint32
+```
+FileMode代表文件的模式和权限标志位。标志位在所有的操作系统有相同的定义，因此文件的信息可以从一个操作系统移动到另外一个操作系统。不是所有的标志位是用所有的系统。唯一要求的标志位是目录的ModeDir。
+```go
+const (
+    // The single letters are the abbreviations
+    // used by the String method's formatting.
+    ModeDir        FileMode = 1 << (32 - 1 - iota) // d: is a directory
+    ModeAppend                                     // a: append-only
+    ModeExclusive                                  // l: exclusive use
+    ModeTemporary                                  // T: temporary file (not backed up)
+    ModeSymlink                                    // L: symbolic link
+    ModeDevice                                     // D: device file
+    ModeNamedPipe                                  // p: named pipe (FIFO)
+    ModeSocket                                     // S: Unix domain socket
+    ModeSetuid                                     // u: setuid
+    ModeSetgid                                     // g: setgid
+    ModeCharDevice                                 // c: Unix character device, when ModeDevice is set
+    ModeSticky                                     // t: sticky
+
+    // Mask for the type bits. For regular files, none will be set.
+    ModeType = ModeDir | ModeSymlink | ModeNamedPipe | ModeSocket | ModeDevice
+
+    ModePerm FileMode = 0777 // permission bits
+)
+```
+所定义的文件标志位最重要的位是FileMode。9个次重要的位是标准Unix rwxrwxrwx权限。这些位的值应该被认为公开API的一部分，可能用于连接协议或磁盘表示：它们必须不能被改变，尽管新的标志位有可能增加。
+
 ###func (FileMode) IsDir
 ```go
 func (m FileMode) IsDir() bool
 ```
+报告`m`是否描述了一个目录。意思是说，它测试`m`中设置的ModeDir位。
 
 ###func (FileMode) IsRegular
 ```go
 func (m FileMode) IsRegular() bool
 ```
+报告`m`是否描述了一个regular 文件。意思是说，它测试`m`中没有mode type被设置。
 
 ###func (FileMode) Perm
 ```go
 func (m FileMode) Perm() FileMode
 ```
+返回Unix权限位。
 
 ###func (FileMode) String
 ```go
@@ -455,6 +500,7 @@ type LinkError struct {
     Err error
 }
 ```
+LinkError记录了一个在链接或者syslink或者重命名的系统调用中发生的错误和引起错误的文件的路径。
 
 ###func (*LinkError) Error
 ```go
@@ -469,6 +515,7 @@ type PathError struct {
     Err  error
 }
 ```
+PathError记录了一个错误、操作和产生错误的文件路径。
 
 ###func (*PathError) Error
 ```go
@@ -485,6 +532,7 @@ type ProcAttr struct {
     Sys *syscall.SysProcAttr
 }
 ```
+ProcAttr包含属性，这些属性将会被应用在被StartProcess启动的新进程上。
 
 ###type Process struct
 ```go
@@ -492,52 +540,66 @@ type Process struct {
     Pid int
 }
 ```
+Process存储了通过StartProcess创建的进程信息。
 
 ###func FindProcess
 ```go
 func FindProcess(pid int) (p *Process, err error)
 ```
+FindProcess通过`pid`查找一个运行的进程。返回的进程会被用来获得关于底层操作系统进程的信息。
 
 ###func StartProcess
 ```go
 func StartProcess(name string, argv []string, attr *ProcAttr) (*Process, error)
 ```
+StartProcess启动一个新的进程，其传入的`name`、`argv`和`addr`指定了程序、参数和属性。
+
+StartProcess是一个低层次的接口。os/exec包提供了高层次的接口。
+
+如果出错，将会是*PathError错误。
 
 ###func (*Process) Kill
 ```go
 func (p *Process) Kill() error
 ```
+立刻杀死进程。
 
 ###func (*Process) Release
 ```go
 func (p *Process) Release() error
 ```
+Release释放进程`p`相关的资源，在未来使它无法被使用。 只有在Wait没有被调用时，Release才需要调用。
 
 ###func (*Process) Signal
 ```go
 func (p *Process) Signal(sig Signal) error
 ```
+发送信号给进程。发送中断在Windows没有被实现。
 
 ###func (*Process) Wait
 ```go
 func (p *Process) Wait() (*ProcessState, error)
 ```
+Wait等待进程退出，然后返回描述进程状态的ProcessState 和错误（如果存在）。Wait释放进程相关的资源。在大多数的系统上，进程必须是当前进程的子进程否则会返回一个错误。
 
 ###type ProcessState struct
 ```go
 type ProcessState struct {
 }
 ```
+ProcessState存储了Wait函数报告的进程信息。
 
 ###func (*ProcessState) Exited
 ```go
 func (p *ProcessState) Exited() bool
 ```
+报告程序是否已经退出。
 
 ###func (*ProcessState) Pid
 ```go
 func (p *ProcessState) Pid() int
 ```
+返回已经退出的进程的进程id。
 
 ###func (*ProcessState) String
 ```go
@@ -548,6 +610,7 @@ func (p *ProcessState) String() string
 ```go
 func (p *ProcessState) Success() bool
 ```
+报告程序是否成功退出，比如Unix系统上的退出状态码0。
 
 ###func (*ProcessState) Sys
 ```go
