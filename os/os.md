@@ -5,6 +5,7 @@ import "os"
 ---
 
 ##简介
+关于进程和文件的
 
 ##概览
 os包提供了平台独立的接口来操作系统。设计是Unix—-like的的，虽然错误处理Go-like的，失败的调用会返回error类型的值而不是错误代码。常常从error能得到更多的信息。比如，如果通过文件名的调用，比如Open或者Stat，错误会包括失败的文件名（当打印的时候）和*PathError类型，这个类型可以解包然后得到更多信息。
@@ -35,8 +36,61 @@ if err != nil {
 fmt.Printf("read %d bytes: %q\n", count, data[:count])
 ```
 
-##变量
+##常量
+```go
+const (
+    O_RDONLY int = syscall.O_RDONLY // open the file read-only.
+    O_WRONLY int = syscall.O_WRONLY // open the file write-only.
+    O_RDWR   int = syscall.O_RDWR   // open the file read-write.
+    O_APPEND int = syscall.O_APPEND // append data to the file when writing.
+    O_CREATE int = syscall.O_CREAT  // create a new file if none exists.
+    O_EXCL   int = syscall.O_EXCL   // used with O_CREATE, file must not exist
+    O_SYNC   int = syscall.O_SYNC   // open for synchronous I/O.
+    O_TRUNC  int = syscall.O_TRUNC  // if possible, truncate file when opened.
+)
+```
+Open函数的Flags封装了底层系统。不是所有的flags都在给定的系统实现了。
 
+```go
+const (
+    SEEK_SET int = 0 // seek relative to the origin of the file
+    SEEK_CUR int = 1 // seek relative to the current offset
+    SEEK_END int = 2 // seek relative to the end
+)
+```
+Seek函数所使用的值。
+```go
+const (
+    PathSeparator     = '\\' // OS-specific path separator
+    PathListSeparator = ';'  // OS-specific path list separator
+)
+```
+```go
+const DevNull = "NUL"
+```
+
+##变量
+```go
+var (
+    ErrInvalid    = errors.New("invalid argument")
+    ErrPermission = errors.New("permission denied")
+    ErrExist      = errors.New("file already exists")
+    ErrNotExist   = errors.New("file does not exist")
+)
+```
+列出了常见的系统调用错误。
+```go
+var (
+    Stdin  = NewFile(uintptr(syscall.Stdin), "/dev/stdin")
+    Stdout = NewFile(uintptr(syscall.Stdout), "/dev/stdout")
+    Stderr = NewFile(uintptr(syscall.Stderr), "/dev/stderr")
+)
+```
+Stdin、Stdout和Stderr代表标准输入、标准输出和标准错误文件描述符。
+```go
+var Args []string
+```
+Args持有启动程序的命令行参数。
 
 ###func Chdir
 ```go
@@ -616,21 +670,25 @@ func (p *ProcessState) Success() bool
 ```go
 func (p *ProcessState) Sys() interface{}
 ```
+返回有关进程的系统独立的退出信息。转换它为恰当的底层类型（比如Unix上的syscall.WaitStatus），来得到它的内容。
 
 ###func (*ProcessState) SysUsage
 ```go
 func (p *ProcessState) SysUsage() interface{}
 ```
+SysUsage返回关于退出进程的系统独立的资源使用信息。转换它为恰当的底层类型（比如Unix上的*syscall.Rusage），来得到它的内容（在Unix系统，*syscall.Rusage匹配在 getrusage(2) manual page定义的结构rusage）。
 
 ###func (*ProcessState) SystemTime
 ```go
 func (p *ProcessState) SystemTime() time.Duration
 ```
+返回退出进程和子进程的系统CPU时间。
 
 ###func (*ProcessState) UserTime
 ```go
 func (p *ProcessState) UserTime() time.Duration
 ```
+返回退出进程和子进程的用户CPU时间。
 
 ###type Signal interface
 ```go
@@ -640,6 +698,13 @@ type Signal interface {
 }
 ```
 代表操作系统的信号。底层的实现是操作系统独立的：在Unix是syscal.Signal。
+```go
+var (
+    Interrupt Signal = syscall.SIGINT
+    Kill      Signal = syscall.SIGKILL
+)
+```
+保证在所有系统的唯一的信号是Interrupt（发送给进程一个中断）和Kill（强制进程退出）。
 
 ###type SyscallError struct
 ```go
