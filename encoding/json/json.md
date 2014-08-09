@@ -20,7 +20,9 @@ Compact向`dst`中增加JSON-encoded `src`，同时消除那些微不足道的�
 ```go
 func HTMLEscape(dst *bytes.Buffer, src []byte)
 ```
-HTMLEscape向`dst`中增加JSON-encoded `src`，同时字符串中的<, >, &, U+2028 and U+2029 字符转换为 \u003c, \u003e, \u0026, \u2028, \u2029，这样JSON可以安全地嵌入在HTML <脚本>标记。因为历史的原因，web浏览器不会尊重没有<script> 标签的标准HTML（ don't honor standard HTML escaping within <script> tags），所以需要JSON编码来替换。
+HTMLEscape向`dst`中增加JSON-encoded `src`，同时字符串中的<, >, &, U+2028 and U+2029 字符转换为 \u003c, \u003e, \u0026, \u2028, \u2029，这样JSON可以安全地嵌入在HTML <脚本>标记。
+
+未完。。。
 
 ###func Indent
 ```go
