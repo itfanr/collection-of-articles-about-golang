@@ -85,7 +85,7 @@ Unmarshal只会解码在目标类型中出现的域。在上面的例子中，m�
 
 但是，如果你事先并不了解JSON数据的结构，又该如何呢？
 
-Generic JSON with interface{}
+##Generic JSON with interface{}
 
 interface{}类型（空接口）表示一个没有方法的接口。每一个Go类型至少实现了0个方法，因此都符合空接口。
 
