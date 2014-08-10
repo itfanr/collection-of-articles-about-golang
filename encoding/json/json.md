@@ -22,7 +22,7 @@ func HTMLEscape(dst *bytes.Buffer, src []byte)
 ```
 HTMLEscape向`dst`中增加JSON-encoded `src`，同时字符串中的<, >, &, U+2028 and U+2029 字符转换为 \u003c, \u003e, \u0026, \u2028, \u2029，这样JSON可以安全地嵌入在HTML <脚本>标记。
 
-未完。。。
+TODO...
 
 ###func Indent
 ```go
@@ -36,6 +36,46 @@ Indent向`dst`中增加带有缩进形式的JSON-encoded `src`。
 ```go
 func Marshal(v interface{}) ([]byte, error)
 ```
+Marshal返回`v·的JSON编码结果。
+
+Marshal递归遍历`v`的值。如果遇到的值实现了Marshaler 接口而且不是一个空指针，Marshal调用它的MarshalJSON 方法来产生JSON。空指针异常并不是必须的，除了与之类似的mimics（在UnmarshalJSON中的必须的异常）之外。
+
+否则，Marshal 使用下面的类型独立的默认编码：
+
+布尔值编码为JSON booleans。
+
+Floating point、integer和 Number 编码为JSON numbers。
+
+字符串编码为JSON strings。如果遇到一个无效的UTF-8序列，InvalidUTF8Error 会返回。“<”和“>”被转为"\u003c"和"\u003e"来防止一些浏览器误将JSON解析为HTML。因为同样的原因，“&”也被用“\u0026”替换。
+
+数组和切片编码为JSON数组。例外的是[]byte编码为base-64编码的字符串和空切片编码为null JSON对象。
+
+结构编码为JSON对象。每一个导出的结构成员成为了对象的成员除了
+```go
+- the field's tag is "-", or
+- the field is empty and its tag specifies the "omitempty" option.
+```
+空值为flase、0、任意空指针或者接口值，还有数组、切片、map或者零长度的字符串。对象的默认key字符串是结构成员名字但是在结构的成员tag值中可以具体指定。结构成员tag值中的“json” key是key名字，接下来是可选的逗号和选择项。比如：
+
+```
+// Field is ignored by this package.
+Field int `json:"-"`
+
+// Field appears in JSON as key "myName".
+Field int `json:"myName"`
+
+// Field appears in JSON as key "myName" and
+// the field is omitted from the object if its value is empty,
+// as defined above.
+Field int `json:"myName,omitempty"`
+
+// Field appears in JSON as key "Field" (the default), but
+// the field is skipped if empty.
+// Note the leading comma.
+Field int `json:",omitempty"`
+```
+
+TODO...
 
 >只有能够被表示成合法的JSON的数据才会被编码：
 - JSON objects 只支持字符串作为 keys；要对 Go map 类型编码，必须是这是形式map[string]T（其中T任意一种 json 包支持的 Go 类型）
