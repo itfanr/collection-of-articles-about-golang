@@ -9,6 +9,12 @@ import "encoding/json"
 ##概览
 json实现了JSON对象（RFC4627中定义）的编码和解码。JSON和Go值之间的映射在Marshal和Unmarshal函数的文档中描述。可以参考文章` http://golang.org/doc/articles/json_and_go.html `理解json包。
 
+>只有能够被表示成合法的JSON的数据才会被编码：
+
+> - JSON objects 只支持字符串作为 keys；要对 Go map 类型编码，必须是这是形式map[string]T（其中T任意一种 json 包支持的 Go 类型）
+- Channel， complex 以及函数不能被编码
+- 不支持循环的数据结构；这会导致 Marshal 进入死循环
+- 指针会被编码成它们指向的值（或者null如果指针是nil）
 
 ###func Compact
 ```go

@@ -4,17 +4,19 @@
 
 ---
 
+`http://rgyq.blog.163.com/blog/static/316125382013934153244/`
+
 翻译自 JSON and Go(`http://blog.golang.org/json-and-go`)
 
 JSON与Go
 
-介绍
+##介绍
 
 JSON(JavaScript Object Notation)是一种简单的数据交换格式。从语法上来说，它综合了JavaScript的对象(objects)和列表(lists)。通常用于在web后端和运行在浏览器中的JavaScript程序之间通信，不过也可以用在很多其他的地方。官方主页，json.org，提供了对标准的详尽说明。
 
 使用json 包可以轻松地在Go程序中读写JSON数据
 
-编码
+##编码
 
 通过函数Marshal编码JSON数据。
 
@@ -45,11 +47,13 @@ JSON objects 只支持字符串作为 keys；要对 Go map 类型编码，必须
 Channel， complex 以及函数不能被编码
 不支持循环的数据结构；这会导致 Marshal 进入死循环
 指针会被编码成它们指向的值（或者null如果指针是nil）
-解码
+
+##解码
 
 通过函数Unmarshal解码JSON数据。
-
+```go
 func Unmarshal(data []byte, v interface{}) error
+```
 首先，声明一个变量用于存放解码后的数据
 ```go
 var m Message
@@ -118,7 +122,8 @@ float64 JSON numbers
 string JSON strings
 nil JSON null
 ```
-解码任意数据
+
+##解码任意数据
 
 考虑这样一个存放在变量b中的JSON数据：
 ```go
@@ -164,7 +169,7 @@ for k, v := range m {
 ```
 通过这种方式我们可以访问未知的 JSON 数据，同时还获得了类型安全的好处。
 
-引用类型
+##引用类型
 
 现在定义一个Go类型来包含上一个例子中的数据：
 ```go
@@ -196,7 +201,7 @@ type IncomingMessage struct {
 ```
 取决于要通信的消息类型，发送方以top-level JSON object 填充 Cmd 域和/或者Msg域。Unmarshal在将数据解码到IncomingMessage结构中时，只会分配在出现在JSON 数据中的结构。要知道处理哪个消息，程序员只需简单的测试下Cmd还是Msg不是nil。
 
-流式编解码
+##流式编解码
 
 json 包提供了Decoder 和 Encoder 用来支持JSON 数据流的读写。函数NewDecoder 和NewEncoder 封装了io.Reader和io.Writer 接口类型。
 ```go
@@ -235,7 +240,7 @@ func main() {
 ```
 由于读写操作的普遍性，类型Encode和Decoder可以用于多种场合，例如读写HTTP 链接，WebSockets或者文件。
 
-参考
+##参考
 
 更多信息请参考[json package documentation]。[jsonrpc] 包中的源文件给出了一个使用json的例子。
 
