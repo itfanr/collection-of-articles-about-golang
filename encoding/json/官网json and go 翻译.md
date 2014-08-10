@@ -1,7 +1,5 @@
 ﻿# JSON与Go
 
-标签（空格分隔）： 未分类
-
 ---
 
 `http://rgyq.blog.163.com/blog/static/316125382013934153244/`
@@ -43,10 +41,10 @@ b == []byte(`{"Name":"Alice","Body":"Hello","Time":1294706395881547000}`)
 ```
 只有能够被表示成合法的JSON的数据才会被编码：
 
-JSON objects 只支持字符串作为 keys；要对 Go map 类型编码，必须是这是形式map[string]T（其中T任意一种 json 包支持的 Go 类型）
-Channel， complex 以及函数不能被编码
-不支持循环的数据结构；这会导致 Marshal 进入死循环
-指针会被编码成它们指向的值（或者null如果指针是nil）
+- JSON objects 只支持字符串作为 keys；要对 Go map 类型编码，必须是这是形式map[string]T（其中T任意一种 json 包支持的 Go 类型）
+- Channel， complex 以及函数不能被编码
+- 不支持循环的数据结构；这会导致 Marshal 进入死循环
+- 指针会被编码成它们指向的值（或者null如果指针是nil）
 
 ##解码
 
@@ -72,9 +70,10 @@ m = Message{
 ```
 Unmarshal是如何定义存放解码的数据的呢？对于一个给定的 JSON key"Foo"，Unmarshal会查询结构体的域来寻找（in order of preference）：
 
-一个带有标签"Foo" 的可导出域（更多关于结构体标签见Go spec）
-一个名为"Foo" 的可导出域，或者
-一个名为"FOO" 或者 "FoO 或者其他大小写的匹配"Foo"的可导出域
+- 一个带有标签"Foo" 的可导出域（更多关于结构体标签见Go spec）
+- 一个名为"Foo" 的可导出域，或者
+- 一个名为"FOO" 或者 "FoO 或者其他大小写的匹配"Foo"的可导出域
+
 当 JSON 数据结构跟 Go 类型不一致会怎么样呢？
 ```go
 b := []byte(`{"Name":"Bob","Food":"Pickle"}`)
