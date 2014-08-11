@@ -74,14 +74,34 @@ Field int `json:"myName,omitempty"`
 // Note the leading comma.
 Field int `json:",omitempty"`
 ```
+"string"选项指示了成员是存储为JSON，它在JSON编码的字符串内部。它只应用于sting成员、float point或者integer类型。当与javascript程序交互时，这个编码的额外的层次
+有时使用。
 
-TODO...
+```go
+Int64String int64 `json:",string"`
+```
+如果它是一个非空字符串（只包含Unicode字母、数字、美元符号、百分号、连字符、下划线、斜杠），key名字会被使用。
 
->只有能够被表示成合法的JSON的数据才会被编码：
-- JSON objects 只支持字符串作为 keys；要对 Go map 类型编码，必须是这是形式map[string]T（其中T任意一种 json 包支持的 Go 类型）
-- Channel， complex 以及函数不能被编码
-- 不支持循环的数据结构；这会导致 Marshal 进入死循环
-- 指针会被编码成它们指向的值（或者null如果指针是nil）
+匿名结构成员经常被编码（marshaled ），如果它们的内部导出变量是外部结构的变量的话。这服从于常见的Go的可见规则，修订的规则在下一段话。匿名结构成员（带有一个名字，其名字在它的JSON tag中给出）会被视为有那个名字，而不是匿名。
+
+关于结构成员的Go的可见规则为JSON而修订，当决定哪个成员被marshal 或被unmarshal。如果有很多成员在同一个层次，和那个层次在最小的嵌套层次（还有将会因此成为被常见的Go规则嵌套层次）；以下的额外规则为：
+
+1)在这些成员中，如果有些是JSON-tagged，只有tagged变量才会被考虑，尽管有多种会引起冲突的untagged成员。
+2）如果恰好有一个成员（tagged或者不按照第一个规则），它会被选中。
+3）除非有多种成员，并且所有的都被忽略；没有错误产生。
+
+处理匿名结构成员是在Go1.1加入的。在Go 1.1之前，匿名结构成员会被忽略。在当前和早先版本中，为了强制忽略的匿名结构成员，会给成员一个JSON tag “-”。
+
+MAP值编码为JSON对象。MAP的key必须是字符串，对象的key直接作为map keys。
+
+指针值编码为指针指向的值。空指针编码为null JSON对象。
+
+接口值编码为在接口中存储的值。空接口编码为null JSON对象。
+
+Channel， complex 以及函数不能被编码为JSON。尝试编码这样的值会导致Marshal 返回UnsupportedTypeError。
+
+JSON不可以代表循环数据结构，Marshal不处理它们。向Marshal传入循环结构会导致无限的递归。
+
 
 ###func MarshalIndent
 ```go
