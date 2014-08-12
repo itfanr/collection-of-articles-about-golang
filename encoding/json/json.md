@@ -101,7 +101,6 @@ Channel， complex 以及函数不能被编码为JSON。尝试编码这样的值
 
 JSON不可以代表循环数据结构，Marshal不处理它们。向Marshal传入循环结构会导致无限的递归。
 
-
 ###func MarshalIndent
 ```go
 func MarshalIndent(v interface{}, prefix, indent string) ([]byte, error)
@@ -116,7 +115,7 @@ Unmarshal解析JSON编码的数据，然后将结果存储在`v`指向的值。
 
 Unmarshal使用Marshal使用的编码的相反行为，按照需要分配map、切片和指针，用以下的附加规则：
 
-为了unmarshal JSON为一个指针，Unmarshal先处理JSON是JSON literal null的情形。在那种情形下，Unmarshal设置指针为nil。否则，Unmarshal 函数unmarshal JSON为指针所指向的值。如果指针为nil，Unmarshal为指针分配新的值。
+为了解码（unmarshal） JSON为一个指针，Unmarshal先处理JSON是JSON literal null的情形。在那种情形下，Unmarshal设置指针为nil。否则，Unmarshal 函数unmarshal JSON为指针所指向的值。如果指针为nil，Unmarshal为指针分配新的值。
 
 为了unmarshal JSON为一个结构，Unmarshal匹配得到的对象keys为Marshal使用的keys（结构成员名或者它的tag），不仅倾向于精确的匹配而且接受大小写敏感的匹配。
 
