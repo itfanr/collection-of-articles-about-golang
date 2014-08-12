@@ -20,9 +20,8 @@ Compact向`dst`中增加JSON-encoded `src`，同时消除那些微不足道的�
 ```go
 func HTMLEscape(dst *bytes.Buffer, src []byte)
 ```
-HTMLEscape向`dst`中增加JSON-encoded `src`，同时字符串中的<, >, &, U+2028 and U+2029 字符转换为 \u003c, \u003e, \u0026, \u2028, \u2029，这样JSON可以安全地嵌入在HTML <脚本>标记。
+HTMLEscape向`dst`中增加JSON-encoded `src`，同时字符串中的<, >, &, U+2028 and U+2029 字符转换为 \u003c, \u003e, \u0026, \u2028, \u2029，这样JSON可以安全地嵌入在HTML <脚本>标记。因为历史的原因，web浏览器不会尊重包括<script>标签的标准的HTML转义，所以会使用供选择的JSON编码。
 
-TODO...
 
 ###func Indent
 ```go
@@ -113,6 +112,30 @@ MarshalIndent和Marshal很像，但是使用了缩进`indent`来格式化输出�
 ```go
 func Unmarshal(data []byte, v interface{}) error
 ```
+Unmarshal解析JSON编码的数据，然后将结果存储在`v`指向的值。
+
+Unmarshal使用Marshal使用的编码的相反行为，按照需要分配map、切片和指针，用以下的附加规则：
+
+为了unmarshal JSON为一个指针，Unmarshal先处理JSON是JSON literal null的情形。在那种情形下，Unmarshal设置指针为nil。否则，Unmarshal 函数unmarshal JSON为指针所指向的值。如果指针为nil，Unmarshal为指针分配新的值。
+
+为了unmarshal JSON为一个结构，Unmarshal匹配得到的对象keys为Marshal使用的keys（结构成员名或者它的tag），不仅倾向于精确的匹配而且接受大小写敏感的匹配。
+
+为了unmarshal JSON为一个接口值，Unmarshal存储以下的一个于接口值中：
+
+```go
+bool, for JSON booleans
+float64, for JSON numbers
+string, for JSON strings
+[]interface{}, for JSON arrays
+map[string]interface{}, for JSON objects
+nil for JSON null
+```
+
+如果JSON值不适合一个给定的目标类型或者如果JSON标号超出目标类型，Unmarshal跳过那个成员然后尽力完成unmarshalling。如果没有遇到更多严重的错误，Unmarshal返回UnmarshalTypeError，它描述了最早的这种错误。
+
+通过设置GO值为nil，JSON空值unmarshal为接口、map、指针或者切片。因为在JSON中使用null意味着“not present”， unmarshal一个JSON null为任意其他GO类型不会影响值和产生错误。
+
+当 unmarshal引用的字符串，无效的UTF8或者无效的UTF-16代理对不会按照错误对待。然而，它们用Unicode replacement 字符U+FFFD来代替。
 
 >Unmarshal是如何定义存放解码的数据的呢？对于一个给定的 JSON key"Foo"，Unmarshal会查询结构体的域来寻找（in order of preference）：
 - 一个带有标签"Foo" 的可导出域（更多关于结构体标签见Go spec）
