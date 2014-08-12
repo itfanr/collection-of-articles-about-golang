@@ -6,6 +6,8 @@ import "encoding/json"
 
 ##简介
 
+json和xml之争一直存在着。
+
 ##概览
 json实现了JSON对象（RFC4627中定义）的编码和解码。JSON和Go值之间的映射在Marshal和Unmarshal函数的文档中描述。可以参考文章` http://golang.org/doc/articles/json_and_go.html `理解json包。
 
@@ -20,7 +22,7 @@ Compact向`dst`中增加JSON-encoded `src`，同时消除那些微不足道的�
 ```go
 func HTMLEscape(dst *bytes.Buffer, src []byte)
 ```
-HTMLEscape向`dst`中增加JSON-encoded `src`，同时字符串中的<, >, &, U+2028 and U+2029 字符转换为 \u003c, \u003e, \u0026, \u2028, \u2029，这样JSON可以安全地嵌入在HTML <脚本>标记。因为历史的原因，web浏览器不会尊重包括<script>标签的标准的HTML转义，所以会使用供选择的JSON编码。
+HTMLEscape向`dst`中增加JSON-encoded `src`，同时字符串中的<, >, &, U+2028 and U+2029 字符转换为 \u003c, \u003e, \u0026, \u2028, \u2029，这样JSON可以安全地嵌入在HTML <脚本>标记。因为历史的原因，web浏览器不会尊重包括`<script>`标签的标准的HTML转义，所以会使用供选择的JSON编码。
 
 
 ###func Indent
