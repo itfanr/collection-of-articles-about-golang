@@ -29,9 +29,7 @@ HTMLEscape向`dst`中增加JSON-encoded `src`，同时字符串中的<, >, &, U+
 ```go
 func Indent(dst *bytes.Buffer, src []byte, prefix, indent string) error
 ```
-Indent向`dst`中增加带有缩进形式的JSON-encoded `src`。
-
-未完。。。
+Indent向`dst`中增加带有缩进形式的JSON-encoded `src`。一个JSON对象中的每个元素或者一个JSON array中的每个元素开始是一个新的缩进的行，该行以一个前缀开始，接下来是一个或者更多缩进的复本（根据缩进嵌套）。附加在`dst`后面的数据不会以前缀或者缩进开始，而且没有trailing 换行，这样使得它很容易的嵌入到其他格式化了的JSON数据中。
 
 ###func Marshal
 ```go
